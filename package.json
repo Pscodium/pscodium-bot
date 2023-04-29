@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "ts-node src/index.ts",
     "build": "tsc src/index.ts",
-    "start": "tsc esm src/index.ts && node .",
+    "start": "ts-node src/index.ts",
     "eslint": "eslint ./src",
     "eslint_fix": "eslint ./src --fix"
   },
