@@ -6,6 +6,7 @@ import  * as fs from 'fs';
 import path from 'path';
 import { CommandType, ComponentsButton, ComponentsModal, ComponentsSelect } from "./types/Command";
 import { EventType } from "./types/Event";
+export * from 'colors';
 dotenv.config();
 
 const fileCondition = (fileName: string) => fileName.endsWith(".ts") || fileName.endsWith(".js");
