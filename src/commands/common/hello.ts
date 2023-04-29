@@ -13,5 +13,9 @@ export default new Command({
         interaction.editReply({
             content: "Hello World!"
         });
+
+        setTimeout(() => {
+            interaction.deleteReply();
+        }, 3000);
     }
 });
