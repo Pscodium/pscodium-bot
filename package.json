@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "ts-node src/index.ts",
-    "build": "tsc src/index.ts",
+    "build": "tsc",
     "start": "ts-node src/index.ts",
     "eslint": "eslint ./src",
     "eslint_fix": "eslint ./src --fix"
@@ -16,6 +16,10 @@
   },
   "keywords": [],
   "author": "",
+  "engines": {
+    "node": "18.7",
+    "npm": "9.5.1"
+  },
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/Pscodium/pscodium-bot/issues"

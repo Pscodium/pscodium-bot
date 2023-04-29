@@ -1,6 +1,6 @@
 import { ExtendedClient } from './structs/ExtendedClient';
 export * from 'colors';
-import config from './config.json';
+import * as config from './config.json';
 
 const client = new ExtendedClient();
 

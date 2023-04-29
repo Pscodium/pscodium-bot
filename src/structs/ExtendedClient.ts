@@ -1,9 +1,9 @@
 /* eslint-disable no-unsafe-optional-chaining */
 /* eslint-disable no-sync */
 import { Client, IntentsBitField, Partials, BitFieldResolvable, GatewayIntentsString, Collection, ApplicationCommandDataResolvable, ClientEvents } from "discord.js";
-import dotenv from 'dotenv';
+import dotenv = require('dotenv');
 import  * as fs from 'fs';
-import path from 'path';
+import path = require('path');
 import { CommandType, ComponentsButton, ComponentsModal, ComponentsSelect } from "./types/Command";
 import { EventType } from "./types/Event";
 export * from 'colors';
