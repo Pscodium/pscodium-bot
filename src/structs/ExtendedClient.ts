@@ -27,7 +27,6 @@ export class ExtendedClient extends Client {
         });
     }
     public start() {
-        this.logCommands();
         this.registerModules();
         this.registerEvents();
         this.login(process.env.BOT_TOKEN);
@@ -88,13 +87,6 @@ export class ExtendedClient extends Client {
                     }
                 });
 
-        });
-    }
-    private logCommands(){
-        this.on('ready', () => {
-            this.on('interactionCreate', (message) => {
-                console.log(`\nInteraction Listener\nCommand: ${message} \nAuthor: ${message.user.tag}\nAuthor Id: ${message.user.id}`.magenta);
-            });
         });
     }
 }

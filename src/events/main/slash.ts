@@ -12,6 +12,6 @@ export default new Event({
 
         const options = interaction.options as CommandInteractionOptionResolver;
 
-        command.run({client, interaction, options });
+        command.run({ client, interaction, options });
     },
 });
