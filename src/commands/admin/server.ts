@@ -6,6 +6,9 @@ export default new Command({
     name: "server",
     description: "Change server settings",
     type: ApplicationCommandType.ChatInput,
+    defaultMemberPermissions: [
+        "Administrator"
+    ],
     options: [
         {
             name: "icon",

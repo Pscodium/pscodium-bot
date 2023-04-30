@@ -5,6 +5,9 @@ export default new Command({
     name: "clear",
     description: "delete chat messages",
     type: ApplicationCommandType.ChatInput,
+    defaultMemberPermissions: [
+        "ManageChannels"
+    ],
     options: [
         {
             name: "amount",
