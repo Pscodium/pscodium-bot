@@ -32,7 +32,7 @@ export default new Command({
                     content: response.data.name + " " + response.data.sprites.front_default
                 });
             })
-            .catch(async error => {
+            .catch(async () => {
                 await interaction.deferReply({ ephemeral: true });
 
                 interaction.editReply({
