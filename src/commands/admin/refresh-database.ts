@@ -24,7 +24,6 @@ export default new Command({
                     id: interaction.user.id
                 }
             });
-            console.log('user que existe', userExists);
             if (userExists) {
                 return;
             }

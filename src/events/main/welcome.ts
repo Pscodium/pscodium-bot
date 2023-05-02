@@ -5,7 +5,6 @@ export default new Event({
     name: "guildMemberAdd",
     once: false,
     async run(interaction) {
-        console.log("User enter in guild");
         const userExists = await db.User.findOne({
             where: {
                 id: interaction.user.id

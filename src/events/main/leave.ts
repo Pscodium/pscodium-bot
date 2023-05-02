@@ -5,7 +5,6 @@ export default new Event({
     name: "guildMemberRemove",
     once: false,
     async run(interaction) {
-        console.log("User Leave from guild");
         const userExists = await db.User.findOne({
             where: {
                 id: interaction.user.id

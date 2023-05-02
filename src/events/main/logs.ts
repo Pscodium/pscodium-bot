@@ -5,7 +5,6 @@ export default new Event({
     once: false,
     run(interaction) {
         if (interaction.isCommand() || interaction.isUserContextMenuCommand()){
-            console.log(interaction);
             console.log(`\nInteraction Listener`.yellow,`\nCommand: ${interaction.commandName} \nAuthor: ${interaction.user.tag}\nAuthor Id: ${interaction.user.id}`.magenta);
         }
     }
