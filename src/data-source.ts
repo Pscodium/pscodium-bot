@@ -2,6 +2,7 @@
 import { Sequelize } from "sequelize";
 import dotenv = require('dotenv');
 import User from "./models/tables/User";
+import Bank from "./models/tables/Bank";
 dotenv.config();
 
 const sequelize = new Sequelize(String(process.env.DB_NAME), String(process.env.DB_USER), String(process.env.DB_PASSWORD), {
@@ -10,7 +11,18 @@ const sequelize = new Sequelize(String(process.env.DB_NAME), String(process.env.
 });
 
 const db = {
-    User: User(sequelize)
+    User: User(sequelize),
+    Bank: Bank(sequelize)
 };
 
-export  { sequelize, db };
+db.User.belongsTo(db.Bank, {
+    foreignKey: "bankId",
+    constraints: true
+});
+
+sequelize.sync({ alter: true }).then(() => {
+    console.log('Todas as tabelas foram sincronizadas.');
+});
+
+
+export { sequelize, db };

@@ -6,6 +6,7 @@
     "blue": "#2D53FF",
     "gray": "#A1A1A1",
     "white": "#FFF",
-    "black": "#000"
+    "black": "#000",
+    "default_role": "#9aaab5"
   }
 }

@@ -15,9 +15,6 @@ sequelize.authenticate()
         console.error("Error authenticating database: ", err);
     });
 
-sequelize.sync().then(() => {
-    console.log('Todas as tabelas foram sincronizadas.');
-});
 
 
 export { client, config };
