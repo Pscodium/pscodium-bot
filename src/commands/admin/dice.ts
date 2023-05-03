@@ -35,7 +35,7 @@ export default new Command({
             .setColor(config.colors.turquoise as ColorResolvable)
             .setTimestamp();
 
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply();
 
         interaction.editReply({
             embeds: [embed]
