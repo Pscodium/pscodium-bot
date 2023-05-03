@@ -1,7 +1,21 @@
-import { DataTypes, Sequelize } from "sequelize";
+import { DataTypes, Model, Sequelize } from "sequelize";
+import { TransactionInstance } from "./Bank";
+
+interface UsersAttributes {
+    id: string;
+    bot: boolean;
+    username: string;
+    discriminator: string;
+    userTag: string;
+    bankId?: number;
+}
+
+interface UserIntance extends Model<UsersAttributes>, UsersAttributes {
+    bank: TransactionInstance;
+}
 
 export default function User(sequelize: Sequelize) {
-    const User = sequelize.define("user", {
+    const User = sequelize.define<UserIntance>("user", {
         id: {
             type: DataTypes.STRING,
             primaryKey: true
@@ -15,6 +29,9 @@ export default function User(sequelize: Sequelize) {
         },
         discriminator: {
             type: DataTypes.INTEGER,
+        },
+        userTag: {
+            type: DataTypes.STRING,
         }
     });
 

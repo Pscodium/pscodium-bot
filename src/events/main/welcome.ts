@@ -14,12 +14,14 @@ export default new Event({
         if (userExists) {
             return;
         }
-
+        const bank = await db.Bank.create();
         db.User.create({
             id: interaction.user.id,
             bot: interaction.user.bot,
             username: interaction.user.username,
             discriminator: interaction.user.discriminator,
+            userTag: interaction.user.tag,
+            bankId: bank.dataValues.id
         });
     }
 });
