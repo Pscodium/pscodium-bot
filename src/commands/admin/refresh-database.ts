@@ -1,5 +1,4 @@
-import { ApplicationCommandType, ColorResolvable, EmbedBuilder, GuildMember } from "discord.js";
-import { config } from "../..";
+import { ApplicationCommandType} from "discord.js";
 import { db } from "../../data-source";
 import { Command } from "../../structs/types/Command";
 
@@ -27,12 +26,16 @@ export default new Command({
             if (userExists) {
                 return;
             }
-            db.User.create({
+            const bank = await db.Bank.create();
+            await db.User.create({
                 id: member.user.id,
                 bot: member.user.bot,
                 username: member.user.username,
                 discriminator: member.user.discriminator,
+                userTag: member.user.tag,
+                bankId: bank.dataValues.id
             });
+            bank.save();
         });
 
 
