@@ -21,12 +21,19 @@ export default new Command({
             description: "Get member bank account information",
             type: ApplicationCommandOptionType.User,
             required: false
+        },
+        {
+            name: "visibility",
+            description: "Visibility from this message",
+            type: ApplicationCommandOptionType.Boolean,
+            required: false,
         }
     ],
     async run({interaction, options}) {
 
         const mention = options.getUser('member');
         const amount = options.getNumber('amount');
+        const visibility = options.getBoolean('visibility');
 
         const member = interaction.user;
 
@@ -34,7 +41,10 @@ export default new Command({
         if (!amount) return;
 
         if (member.id !== "439915811692609536") {
-            interaction.reply({ content: "Você não tem permissões para utilizar esse comando", ephemeral: true });
+            interaction.reply({
+                content: "Você não tem permissões para utilizar esse comando",
+                ephemeral: true
+            });
             return;
         }
 
@@ -67,6 +77,9 @@ export default new Command({
                 }
             });
 
-        interaction.reply({ content: `${member} enviou para ${mention? mention : member} ${formatedCash(amount)} créditos!!`});
+        interaction.reply({
+            content: `${member} enviou para ${mention? mention : member} ${formatedCash(amount)} créditos!!`,
+            ephemeral: visibility == undefined? false : visibility
+        });
     },
 });
