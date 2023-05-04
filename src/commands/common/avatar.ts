@@ -7,9 +7,6 @@ export default new Command({
     name: "avatar",
     description: "Get avatar icon.",
     type: ApplicationCommandType.ChatInput,
-    defaultMemberPermissions: [
-        "Administrator"
-    ],
     options: [
         {
             name: "user",
