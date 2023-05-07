@@ -13,7 +13,7 @@
 
 ## Environment Variables
 
-```json
+```
 
 BOT_TOKEN="Your-Token"
 
@@ -37,6 +37,8 @@ DB_NAME=database
 
 
 ## Versions
+
+- v0.15 - Added `/blackjack` and `/emoji` command tests.
 
 - v0.14 - Command `/give-money` now it has a boolean field to change a reply message visibility.
 
