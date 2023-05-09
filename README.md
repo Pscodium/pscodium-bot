@@ -87,11 +87,14 @@ DB_NAME=database
 - Store in user database the users games information (wins, loses, ratio etc)
 
 ## Commands Version
-- Blackjack v1 - Command under creation and will need trial versions.
+- Blackjack v1 - Command under tests.
   - Create a tie between dealer and user.
   - Create more moves and store all the possibilities.
   - If user writes command but doesn't play, store current move in database to avoid players cheating games.
   - Create the double down button interaction.
+- Blackjack v1.0.1 - Command under tests.
+  - Create blackjack database to store user plays.
+  - If user writes command but doesn't play, store current move in database to avoid players cheating games.
 
 - Crash v1 - Command created and working.
   - Create animations for the command to make it interactive (Possible spike).
