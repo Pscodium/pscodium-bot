@@ -8,27 +8,33 @@ import { Command } from "../../structs/types/Command";
 interface PlayProps {
     countHits?: number;
     continueInteraction?: boolean;
+    lastPlay?: boolean;
+    draw?: boolean;
 
     firstPlayerCard?: EmojiCode;
     secondPlayerCard?: EmojiCode;
     thirdPlayerCard?: EmojiCode;
     fourthPlayerCard?: EmojiCode;
+    fifthPlayerCard?: EmojiCode;
 
     userPlay?: number;
     secondUserPlay?: number;
     thirdUserPlay?: number;
+    fourthUserPlay?: number;
 
     firstDealerCard?: EmojiCode;
     secondDealerCard?: EmojiCode;
     thirdDealerCard?: EmojiCode;
     fourthDealerCard?: EmojiCode;
+    fifthDealerCard?: EmojiCode;
 
     dealerPlay?: number;
     secondDealerPlay?: number;
     thirdDealerPlay?: number;
+    fourthDealerPlay?: number;
 
     userWin?: boolean;
-    interaction: ButtonInteraction<CacheType>
+    interaction: ButtonInteraction<CacheType>;
 }
 
 interface EmojiCode {
@@ -48,7 +54,7 @@ export default new Command({
             required: false
         }
     ],
-    async run({interaction, options}) {
+    async run({ interaction, options }) {
 
         const member = interaction.user;
         const bet = options.getNumber('bet');
@@ -69,23 +75,27 @@ export default new Command({
             return;
         }
 
-        const row = new ActionRowBuilder<ButtonBuilder>({ components: [
-            new ButtonBuilder({
-                customId: "hit",
-                label: "hit",
-                style: ButtonStyle.Secondary
-            }),
-            new ButtonBuilder({
-                customId: "stand",
-                label: "stand",
-                style :ButtonStyle.Secondary
-            }),
-            new ButtonBuilder({
-                customId: "double",
-                label: "x2 double down",
-                style :ButtonStyle.Secondary
-            })
-        ]});
+        const hit = new ButtonBuilder({
+            customId: "hit",
+            label: "hit",
+            style: ButtonStyle.Secondary
+        });
+
+        const stand = new ButtonBuilder({
+            customId: "stand",
+            label: "stand",
+            style: ButtonStyle.Secondary
+        });
+
+        const doubleDown = new ButtonBuilder({
+            customId: "double",
+            label: "x2 double down",
+            style: ButtonStyle.Secondary
+        });
+
+        const row = new ActionRowBuilder<ButtonBuilder>({
+            components: [ hit, stand, doubleDown ]
+        });
 
         const emojiList = await db.Emoji.findAll();
 
@@ -93,9 +103,25 @@ export default new Command({
             return { emoji: emoji.emoji, value: emoji.value };
         });
 
+        const resolvableEmoji: EmojiCode = { emoji: "false", value: "false" };
+
+        const selectedEmojis: EmojiCode[] = [];
+
         function getRandomEmoji(list: EmojiCode[]) {
-            const randomIndex = Math.floor(Math.random() * list.length);
-            return list[randomIndex];
+            if (selectedEmojis.length === list.length) {
+                return null;
+            }
+
+            let randomEmoji: EmojiCode;
+
+            do {
+                const randomIndex = Math.floor(Math.random() * list.length);
+                randomEmoji = list[randomIndex];
+            } while (selectedEmojis.includes(randomEmoji));
+
+            selectedEmojis.push(randomEmoji);
+
+            return randomEmoji;
         }
 
         function removeLetters(str: string) {
@@ -104,66 +130,156 @@ export default new Command({
 
         function formatedCash(amount: number) {
             let formated = amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-            if(Number(formated) >= 100) {
+            if (Number(formated) >= 100) {
                 formated = formated.replace(',', '.');
             }
             return formated;
         }
 
-        const firstUserCard = getRandomEmoji(emojiCode);
-        const secondUserCard = getRandomEmoji(emojiCode);
-        const thirdUserCard = getRandomEmoji(emojiCode);
-        const fourthUserCard = getRandomEmoji(emojiCode);
+        const firstUserCard = getRandomEmoji(emojiCode) ?? resolvableEmoji;
+        const secondUserCard = getRandomEmoji(emojiCode) ?? resolvableEmoji;
+        const thirdUserCard = getRandomEmoji(emojiCode) ?? resolvableEmoji;
+        const fourthUserCard = getRandomEmoji(emojiCode) ?? resolvableEmoji;
+        const fifthUserCard = getRandomEmoji(emojiCode) ?? resolvableEmoji;
 
-        const firstDealerCard = getRandomEmoji(emojiCode);
-        const secondDealerCard = getRandomEmoji(emojiCode);
-        const thirdDealerCard = getRandomEmoji(emojiCode);
-        const fourthDealerCard = getRandomEmoji(emojiCode);
+        const firstDealerCard = getRandomEmoji(emojiCode) ?? resolvableEmoji;
+        const secondDealerCard = getRandomEmoji(emojiCode) ?? resolvableEmoji;
+        const thirdDealerCard = getRandomEmoji(emojiCode) ?? resolvableEmoji;
+        const fourthDealerCard = getRandomEmoji(emojiCode) ?? resolvableEmoji;
+        const fifthDealerCard = getRandomEmoji(emojiCode) ?? resolvableEmoji;
 
         const userPlay = removeLetters(firstUserCard.emoji) + removeLetters(secondUserCard.emoji);
         const secondUserPlay = userPlay + removeLetters(thirdUserCard.emoji);
         const thirdUserPlay = secondUserPlay + removeLetters(fourthUserCard.emoji);
+        const fourthUserPlay = thirdUserPlay + removeLetters(fifthUserCard.emoji);
 
         const dealerPlay = removeLetters(firstDealerCard.emoji) + removeLetters(secondDealerCard.emoji);
         const secondDealerPlay = dealerPlay + removeLetters(thirdDealerCard.emoji);
         const thirdDealerPlay = secondDealerPlay + removeLetters(fourthDealerCard.emoji);
+        const fourthDealerPlay = thirdDealerPlay + removeLetters(fifthDealerCard.emoji);
 
-        async function drawPlay({ userWin, firstPlayerCard, secondPlayerCard, thirdDealerCard,fourthPlayerCard, userPlay, secondUserPlay, thirdUserPlay, firstDealerCard, interaction,secondDealerCard, thirdPlayerCard, fourthDealerCard, dealerPlay, secondDealerPlay, thirdDealerPlay, continueInteraction }: PlayProps) {
+        async function drawPlay({ userWin, firstPlayerCard, secondPlayerCard, thirdDealerCard, fourthPlayerCard, fifthPlayerCard, userPlay, secondUserPlay, thirdUserPlay, fourthUserPlay, firstDealerCard, interaction, secondDealerCard, thirdPlayerCard, fourthDealerCard, fifthDealerCard, dealerPlay, secondDealerPlay, thirdDealerPlay, fourthDealerPlay, continueInteraction, lastPlay, draw }: PlayProps) {
             secondUserPlay = secondUserPlay === undefined ? 0 : secondUserPlay;
             thirdUserPlay = thirdUserPlay === undefined ? 0 : thirdUserPlay;
+            fourthUserPlay = fourthUserPlay === undefined ? 0 : fourthUserPlay;
 
             secondDealerPlay = secondDealerPlay === undefined ? 0 : secondDealerPlay;
             thirdDealerPlay = thirdDealerPlay === undefined ? 0 : thirdDealerPlay;
-            const userTotalSum = userPlay? userPlay: 0 + secondUserPlay + thirdUserPlay;
-            const dealerTotalSum = dealerPlay? dealerPlay: 0 + secondDealerPlay + thirdDealerPlay;
+            fourthDealerPlay = fourthDealerPlay === undefined ? 0 : fourthDealerPlay;
+            const userTotalSum = userPlay ? userPlay : 0 + secondUserPlay + thirdUserPlay + fourthUserPlay;
+            const dealerTotalSum = dealerPlay ? dealerPlay : 0 + secondDealerPlay + thirdDealerPlay + fourthDealerPlay;
+
+            if (continueInteraction && lastPlay) {
+                const newRow = new ActionRowBuilder<ButtonBuilder>({
+                    components: [ stand, doubleDown ]
+                });
+
+                interaction.update({
+                    embeds: [
+                        new EmbedBuilder({
+                            title: "Blackjack",
+                            author: {
+                                name: interaction.user.tag,
+                                iconURL: interaction.user.avatarURL() || undefined,
+                            },
+                            description: `
+                        **You | ${userTotalSum}**
+                        ${firstPlayerCard?.value} ${secondPlayerCard?.value} ${thirdPlayerCard ? thirdPlayerCard.value : ''} ${fourthPlayerCard ? fourthPlayerCard.value : ''} ${fifthPlayerCard ? fifthPlayerCard.value : ''}
+                        **Dealer | ${dealerTotalSum}**
+                        ${firstDealerCard?.value} ${secondDealerCard ? secondDealerCard.value : ''} ${thirdDealerCard ? thirdDealerCard.value : ''} ${fourthDealerCard ? fourthDealerCard.value : ''} ${fifthDealerCard ? fifthDealerCard.value : ''}
+                        `
+                        })
+                    ], components: [newRow]
+                });
+                return;
+            }
 
             if (continueInteraction) {
-                interaction.update({ embeds: [
-                    new EmbedBuilder({
-                        title: "Blackjack",
-                        author: {
-                            name: interaction.user.tag,
-                            iconURL: interaction.user.avatarURL() || undefined,
-                        },
-                        description: `
+                interaction.update({
+                    embeds: [
+                        new EmbedBuilder({
+                            title: "Blackjack",
+                            author: {
+                                name: interaction.user.tag,
+                                iconURL: interaction.user.avatarURL() || undefined,
+                            },
+                            description: `
                         **You | ${userTotalSum}**
-                        ${firstPlayerCard?.value} ${secondPlayerCard?.value} ${thirdPlayerCard? thirdPlayerCard.value : ''} ${fourthPlayerCard? fourthPlayerCard.value : ''}
+                        ${firstPlayerCard?.value} ${secondPlayerCard?.value} ${thirdPlayerCard ? thirdPlayerCard.value : ''} ${fourthPlayerCard ? fourthPlayerCard.value : ''} ${fifthPlayerCard ? fifthPlayerCard.value : ''}
                         **Dealer | ${dealerTotalSum}**
-                        ${firstDealerCard?.value} ${secondDealerCard? secondDealerCard.value : ''} ${thirdDealerCard? thirdDealerCard.value : ''} ${fourthDealerCard? fourthDealerCard.value : ''}
+                        ${firstDealerCard?.value} ${secondDealerCard ? secondDealerCard.value : ''} ${thirdDealerCard ? thirdDealerCard.value : ''} ${fourthDealerCard ? fourthDealerCard.value : ''} ${fifthDealerCard ? fifthDealerCard.value : ''}
                         `
-                    })
-                ], components: [row] });
+                        })
+                    ], components: [row]
+                });
+                return;
+            }
+
+            if (draw) {
+                interaction.update({
+                    embeds: [
+                        new EmbedBuilder({
+                            title: "Blackjack",
+                            author: {
+                                name: interaction.user.tag,
+                                iconURL: interaction.user.avatarURL() || undefined,
+                            },
+                            description: `
+                        **You | ${userTotalSum}**
+                        ${firstPlayerCard?.value} ${secondPlayerCard?.value} ${thirdPlayerCard ? thirdPlayerCard.value : ''} ${fourthPlayerCard ? fourthPlayerCard.value : ''} ${fifthPlayerCard ? fifthPlayerCard.value : ''}
+                        **Dealer | ${dealerTotalSum}**
+                        ${firstDealerCard?.value} ${secondDealerCard ? secondDealerCard.value : ''} ${thirdDealerCard ? thirdDealerCard.value : ''} ${fourthDealerCard ? fourthDealerCard.value : ''} ${fifthDealerCard ? fifthDealerCard.value : ''}
+
+                        You had no wins or losses.
+
+                        **DRAW**
+                        `
+                        }).setColor(config.colors.yellow as ColorResolvable)
+                    ], components: []
+                });
                 return;
             }
 
             if (userWin) {
                 await db.Bank.update({
-                    balance: bet? wallet + bet : wallet*2
+                    balance: bet ? wallet + bet : wallet * 2
                 }, {
                     where: { id: storedUser?.bankId }
                 });
 
-                interaction.update({ embeds: [
+                interaction.update({
+                    embeds: [
+                        new EmbedBuilder({
+                            title: "Blackjack",
+                            author: {
+                                name: interaction.user.tag,
+                                iconURL: interaction.user.avatarURL() || undefined,
+                            },
+                            description: `
+                        **You | ${userTotalSum}**
+                        ${firstPlayerCard?.value} ${secondPlayerCard?.value} ${thirdPlayerCard ? thirdPlayerCard.value : ''} ${fourthPlayerCard ? fourthPlayerCard.value : ''} ${fifthPlayerCard ? fifthPlayerCard.value : ''}
+                        **Dealer | ${dealerTotalSum}**
+                        ${firstDealerCard?.value} ${secondDealerCard ? secondDealerCard.value : ''} ${thirdDealerCard ? thirdDealerCard.value : ''} ${fourthDealerCard ? fourthDealerCard.value : ''} ${fifthDealerCard ? fifthDealerCard.value : ''}
+
+                        Your profit: ${bet ? formatedCash(bet) : formatedCash(wallet)}
+                        Current balance: ${bet ? formatedCash(wallet + bet) : formatedCash(wallet * 2)}
+
+                        **WINNER**
+                        `
+                        }).setColor(config.colors.green as ColorResolvable)
+                    ], components: []
+                });
+                return;
+            }
+
+            await db.Bank.update({
+                balance: bet ? wallet - bet : 0
+            }, {
+                where: { id: storedUser?.bankId }
+            });
+
+            interaction.update({
+                embeds: [
                     new EmbedBuilder({
                         title: "Blackjack",
                         author: {
@@ -171,47 +287,19 @@ export default new Command({
                             iconURL: interaction.user.avatarURL() || undefined,
                         },
                         description: `
-                        **You | ${userTotalSum}**
-                        ${firstPlayerCard?.value} ${secondPlayerCard?.value} ${thirdPlayerCard? thirdPlayerCard.value : ''} ${fourthPlayerCard? fourthPlayerCard.value : ''}
-                        **Dealer | ${dealerTotalSum}**
-                        ${firstDealerCard?.value} ${secondDealerCard? secondDealerCard.value : ''} ${thirdDealerCard? thirdDealerCard.value : ''} ${fourthDealerCard? fourthDealerCard.value : ''}
-
-                        Your profit: ${bet? formatedCash(bet) : formatedCash(wallet)}
-                        Current balance: ${bet? formatedCash(wallet + bet) : formatedCash(wallet*2)}
-
-                        **WINNER**
-                        `
-                    }).setColor(config.colors.green as ColorResolvable)
-                ], components: [] });
-                return;
-            }
-
-            await db.Bank.update({
-                balance: bet? wallet - bet : 0
-            }, {
-                where: { id: storedUser?.bankId }
-            });
-
-            interaction.update({ embeds: [
-                new EmbedBuilder({
-                    title: "Blackjack",
-                    author: {
-                        name: interaction.user.tag,
-                        iconURL: interaction.user.avatarURL() || undefined,
-                    },
-                    description: `
                     **You | ${userTotalSum}**
-                    ${firstPlayerCard?.value} ${secondPlayerCard?.value} ${thirdPlayerCard? thirdPlayerCard.value : ''} ${fourthPlayerCard? fourthPlayerCard.value : ''}
+                    ${firstPlayerCard?.value} ${secondPlayerCard?.value} ${thirdPlayerCard ? thirdPlayerCard.value : ''} ${fourthPlayerCard ? fourthPlayerCard.value : ''} ${fifthPlayerCard ? fifthPlayerCard.value : ''}
                     **Dealer | ${dealerTotalSum}**
-                    ${firstDealerCard?.value} ${secondDealerCard? secondDealerCard.value : ''} ${thirdDealerCard? thirdDealerCard.value : ''} ${fourthDealerCard? fourthDealerCard.value : ''}
+                    ${firstDealerCard?.value} ${secondDealerCard ? secondDealerCard.value : ''} ${thirdDealerCard ? thirdDealerCard.value : ''} ${fourthDealerCard ? fourthDealerCard.value : ''} ${fifthDealerCard ? fifthDealerCard.value : ''}
 
-                    You loss: ${bet? formatedCash(bet) : formatedCash(wallet)}
-                    Current balance: ${bet? formatedCash(wallet - bet) : formatedCash(0)}
+                    You loss: ${bet ? formatedCash(bet) : formatedCash(wallet)}
+                    Current balance: ${bet ? formatedCash(wallet - bet) : formatedCash(0)}
 
                     **LOSE**
                     `
-                }).setColor(config.colors.red as ColorResolvable)
-            ], components: [] });
+                    }).setColor(config.colors.red as ColorResolvable)
+                ], components: []
+            });
             return;
         }
 
@@ -257,11 +345,10 @@ export default new Command({
             ${firstDealerCard.value}
             `
         });
-        const msg = await interaction.reply({embeds: [embed], components: [row], fetchReply: true });
+        const msg = await interaction.reply({ embeds: [embed], components: [row], fetchReply: true });
 
         const collector = msg.createMessageComponentCollector({
-            componentType: ComponentType.Button,
-            time: 60000
+            componentType: ComponentType.Button
         });
 
         collector.on('collect', async (buttonInteraction) => {
@@ -274,6 +361,52 @@ export default new Command({
             switch (buttonInteraction.customId) {
                 case 'hit':
                     countHits += 1;
+                    if (countHits >= 3) {
+                        if (fourthUserPlay > 21) {
+                            drawPlay({
+                                interaction: buttonInteraction,
+                                userWin: false,
+                                fourthUserPlay: fourthUserPlay,
+                                firstPlayerCard: firstUserCard,
+                                secondPlayerCard: secondUserCard,
+                                thirdPlayerCard: thirdUserCard,
+                                fourthPlayerCard: fourthUserCard,
+                                fifthPlayerCard: fifthUserCard,
+                                dealerPlay: removeLetters(firstDealerCard.emoji),
+                                firstDealerCard: firstDealerCard
+                            });
+                            break;
+                        }
+                        if (fourthUserPlay == 21) {
+                            drawPlay({
+                                interaction: buttonInteraction,
+                                userWin: true,
+                                fourthUserPlay: fourthUserPlay,
+                                firstPlayerCard: firstUserCard,
+                                secondPlayerCard: secondUserCard,
+                                thirdPlayerCard: thirdUserCard,
+                                fourthPlayerCard: fourthUserCard,
+                                fifthPlayerCard: fifthUserCard,
+                                dealerPlay: removeLetters(firstDealerCard.emoji),
+                                firstDealerCard: firstDealerCard
+                            });
+                            break;
+                        }
+                        drawPlay({
+                            interaction: buttonInteraction,
+                            continueInteraction: true,
+                            lastPlay: true,
+                            fourthUserPlay: fourthUserPlay,
+                            firstPlayerCard: firstUserCard,
+                            secondPlayerCard: secondUserCard,
+                            thirdPlayerCard: thirdUserCard,
+                            fourthPlayerCard: fourthUserCard,
+                            fifthPlayerCard: fifthUserCard,
+                            dealerPlay: removeLetters(firstDealerCard.emoji),
+                            firstDealerCard: firstDealerCard
+                        });
+                        break;
+                    }
                     if (countHits == 2) {
                         if (thirdUserPlay > 21) {
                             drawPlay({
@@ -358,11 +491,268 @@ export default new Command({
                     break;
 
                 case 'stand':
-                    if (countHits >= 2) {
+                    if (countHits === 3) {
+                        if (dealerPlay > fourthUserPlay && dealerPlay <= 21) {
+                            drawPlay({
+                                interaction: buttonInteraction,
+                                userWin: false,
+                                fourthUserPlay: fourthUserPlay,
+                                firstPlayerCard: firstUserCard,
+                                secondPlayerCard: secondUserCard,
+                                thirdPlayerCard: thirdUserCard,
+                                fourthPlayerCard: fourthUserCard,
+                                fifthPlayerCard: fifthUserCard,
+
+                                dealerPlay: dealerPlay,
+                                firstDealerCard: firstDealerCard,
+                                secondDealerCard: secondDealerCard
+                            });
+                            break;
+                        }
+                        if (dealerPlay == fourthDealerPlay) {
+                            drawPlay({
+                                interaction: buttonInteraction,
+                                draw: true,
+                                fourthUserPlay: fourthUserPlay,
+                                firstPlayerCard: firstUserCard,
+                                secondPlayerCard: secondUserCard,
+                                thirdPlayerCard: thirdUserCard,
+                                fourthPlayerCard: fourthUserCard,
+                                fifthPlayerCard: fifthUserCard,
+
+                                dealerPlay: dealerPlay,
+                                firstDealerCard: firstDealerCard,
+                                secondDealerCard: secondDealerCard
+                            });
+                            break;
+                        }
+                        if (dealerPlay > 21) {
+                            drawPlay({
+                                interaction: buttonInteraction,
+                                userWin: true,
+                                fourthUserPlay: fourthUserPlay,
+                                firstPlayerCard: firstUserCard,
+                                secondPlayerCard: secondUserCard,
+                                thirdPlayerCard: thirdUserCard,
+                                fourthPlayerCard: fourthUserCard,
+                                fifthPlayerCard: fifthUserCard,
+
+                                dealerPlay: dealerPlay,
+                                firstDealerCard: firstDealerCard,
+                                secondDealerCard: secondDealerCard
+                            });
+                            break;
+                        }
+                        if (secondDealerPlay > fourthUserPlay && secondDealerPlay <= 21) {
+                            drawPlay({
+                                interaction: buttonInteraction,
+                                userWin: false,
+                                fourthUserPlay: fourthUserPlay,
+                                firstPlayerCard: firstUserCard,
+                                secondPlayerCard: secondUserCard,
+                                thirdPlayerCard: thirdUserCard,
+                                fourthPlayerCard: fourthUserCard,
+                                fifthPlayerCard: fifthUserCard,
+
+                                secondDealerPlay: secondDealerPlay,
+                                firstDealerCard: firstDealerCard,
+                                secondDealerCard: secondDealerCard,
+                                thirdDealerCard: thirdDealerCard,
+                            });
+                            break;
+                        }
+                        if (secondDealerPlay == fourthUserPlay) {
+                            drawPlay({
+                                interaction: buttonInteraction,
+                                draw: true,
+                                fourthUserPlay: fourthUserPlay,
+                                firstPlayerCard: firstUserCard,
+                                secondPlayerCard: secondUserCard,
+                                thirdPlayerCard: thirdUserCard,
+                                fourthPlayerCard: fourthUserCard,
+                                fifthPlayerCard: fifthUserCard,
+
+                                secondDealerPlay: secondDealerPlay,
+                                firstDealerCard: firstDealerCard,
+                                secondDealerCard: secondDealerCard,
+                                thirdDealerCard: thirdDealerCard,
+                            });
+                            break;
+                        }
+                        if (secondDealerPlay > 21) {
+                            drawPlay({
+                                interaction: buttonInteraction,
+                                userWin: true,
+                                fourthUserPlay: fourthUserPlay,
+                                firstPlayerCard: firstUserCard,
+                                secondPlayerCard: secondUserCard,
+                                thirdPlayerCard: thirdUserCard,
+                                fourthPlayerCard: fourthUserCard,
+                                fifthPlayerCard: fifthUserCard,
+
+                                secondDealerPlay: secondDealerPlay,
+                                firstDealerCard: firstDealerCard,
+                                secondDealerCard: secondDealerCard,
+                                thirdDealerCard: thirdDealerCard,
+                            });
+                            break;
+                        }
+                        if (thirdDealerPlay > fourthUserPlay && thirdDealerPlay <= 21) {
+                            drawPlay({
+                                interaction: buttonInteraction,
+                                userWin: false,
+                                fourthUserPlay: fourthUserPlay,
+                                firstPlayerCard: firstUserCard,
+                                secondPlayerCard: secondUserCard,
+                                thirdPlayerCard: thirdUserCard,
+                                fourthPlayerCard: fourthUserCard,
+                                fifthPlayerCard: fifthUserCard,
+
+                                thirdDealerPlay: thirdDealerPlay,
+                                firstDealerCard: firstDealerCard,
+                                secondDealerCard: secondDealerCard,
+                                thirdDealerCard: thirdDealerCard,
+                                fourthDealerCard: fourthDealerCard,
+                            });
+                            break;
+                        }
+                        if (thirdDealerPlay == fourthUserPlay) {
+                            drawPlay({
+                                interaction: buttonInteraction,
+                                draw: true,
+                                fourthUserPlay: fourthUserPlay,
+                                firstPlayerCard: firstUserCard,
+                                secondPlayerCard: secondUserCard,
+                                thirdPlayerCard: thirdUserCard,
+                                fourthPlayerCard: fourthUserCard,
+                                fifthPlayerCard: fifthUserCard,
+
+                                thirdDealerPlay: thirdDealerPlay,
+                                firstDealerCard: firstDealerCard,
+                                secondDealerCard: secondDealerCard,
+                                thirdDealerCard: thirdDealerCard,
+                                fourthDealerCard: fourthDealerCard,
+                            });
+                            break;
+                        }
+                        if (thirdDealerPlay > 21) {
+                            drawPlay({
+                                interaction: buttonInteraction,
+                                userWin: true,
+                                fourthUserPlay: fourthUserPlay,
+                                firstPlayerCard: firstUserCard,
+                                secondPlayerCard: secondUserCard,
+                                thirdPlayerCard: thirdUserCard,
+                                fourthPlayerCard: fourthUserCard,
+                                fifthPlayerCard: fifthUserCard,
+
+                                thirdDealerPlay: thirdDealerPlay,
+                                firstDealerCard: firstDealerCard,
+                                secondDealerCard: secondDealerCard,
+                                thirdDealerCard: thirdDealerCard,
+                                fourthDealerCard: fourthDealerCard,
+                            });
+                            break;
+                        }
+                        if (fourthDealerPlay > fourthUserPlay && fourthDealerPlay <= 21) {
+                            drawPlay({
+                                interaction: buttonInteraction,
+                                userWin: false,
+                                fourthUserPlay: fourthUserPlay,
+                                firstPlayerCard: firstUserCard,
+                                secondPlayerCard: secondUserCard,
+                                thirdPlayerCard: thirdUserCard,
+                                fourthPlayerCard: fourthUserCard,
+                                fifthPlayerCard: fifthUserCard,
+
+                                fourthDealerPlay: fourthDealerPlay,
+                                firstDealerCard: firstDealerCard,
+                                secondDealerCard: secondDealerCard,
+                                thirdDealerCard: thirdDealerCard,
+                                fourthDealerCard: fourthDealerCard,
+                                fifthDealerCard: fifthDealerCard
+                            });
+                            break;
+                        }
+                        if (fourthDealerPlay == fourthUserPlay) {
+                            drawPlay({
+                                interaction: buttonInteraction,
+                                draw: true,
+                                fourthUserPlay: fourthUserPlay,
+                                firstPlayerCard: firstUserCard,
+                                secondPlayerCard: secondUserCard,
+                                thirdPlayerCard: thirdUserCard,
+                                fourthPlayerCard: fourthUserCard,
+                                fifthPlayerCard: fifthUserCard,
+
+                                fourthDealerPlay: fourthDealerPlay,
+                                firstDealerCard: firstDealerCard,
+                                secondDealerCard: secondDealerCard,
+                                thirdDealerCard: thirdDealerCard,
+                                fourthDealerCard: fourthDealerCard,
+                                fifthDealerCard: fifthDealerCard
+                            });
+                            break;
+                        }
+                        if (fourthDealerPlay > 21) {
+                            drawPlay({
+                                interaction: buttonInteraction,
+                                userWin: true,
+                                fourthUserPlay: fourthUserPlay,
+                                firstPlayerCard: firstUserCard,
+                                secondPlayerCard: secondUserCard,
+                                thirdPlayerCard: thirdUserCard,
+                                fourthPlayerCard: fourthUserCard,
+                                fifthPlayerCard: fifthUserCard,
+
+                                fourthDealerPlay: fourthDealerPlay,
+                                firstDealerCard: firstDealerCard,
+                                secondDealerCard: secondDealerCard,
+                                thirdDealerCard: thirdDealerCard,
+                                fourthDealerCard: fourthDealerCard,
+                                fifthDealerCard: fifthDealerCard
+                            });
+                            break;
+                        }
+                        drawPlay({
+                            interaction: buttonInteraction,
+                            userWin: true,
+                            fourthUserPlay: fourthUserPlay,
+                            firstPlayerCard: firstUserCard,
+                            secondPlayerCard: secondUserCard,
+                            thirdPlayerCard: thirdUserCard,
+                            fourthPlayerCard: fourthUserCard,
+                            fifthPlayerCard: fifthUserCard,
+
+                            fourthDealerPlay: fourthDealerPlay,
+                            firstDealerCard: firstDealerCard,
+                            secondDealerCard: secondDealerCard,
+                            thirdDealerCard: thirdDealerCard,
+                            fourthDealerCard: fourthDealerCard,
+                            fifthDealerCard: fifthDealerCard
+                        });
+                        break;
+                    }
+                    if (countHits === 2) {
                         if (dealerPlay > thirdUserPlay && dealerPlay <= 21) {
                             drawPlay({
                                 interaction: buttonInteraction,
                                 userWin: false,
+                                thirdUserPlay: thirdUserPlay,
+                                firstPlayerCard: firstUserCard,
+                                secondPlayerCard: secondUserCard,
+                                thirdPlayerCard: thirdUserCard,
+                                fourthPlayerCard: fourthUserCard,
+                                dealerPlay: dealerPlay,
+                                firstDealerCard: firstDealerCard,
+                                secondDealerCard: secondDealerCard,
+                            });
+                            break;
+                        }
+                        if (dealerPlay == thirdUserPlay) {
+                            drawPlay({
+                                interaction: buttonInteraction,
+                                draw: true,
                                 thirdUserPlay: thirdUserPlay,
                                 firstPlayerCard: firstUserCard,
                                 secondPlayerCard: secondUserCard,
@@ -393,6 +783,22 @@ export default new Command({
                             drawPlay({
                                 interaction: buttonInteraction,
                                 userWin: false,
+                                thirdUserPlay: thirdUserPlay,
+                                firstPlayerCard: firstUserCard,
+                                secondPlayerCard: secondUserCard,
+                                thirdPlayerCard: thirdUserCard,
+                                fourthPlayerCard: fourthUserCard,
+                                secondDealerPlay: secondDealerPlay,
+                                firstDealerCard: firstDealerCard,
+                                secondDealerCard: secondDealerCard,
+                                thirdDealerCard: thirdDealerCard
+                            });
+                            break;
+                        }
+                        if (secondDealerPlay == thirdUserPlay) {
+                            drawPlay({
+                                interaction: buttonInteraction,
+                                draw: true,
                                 thirdUserPlay: thirdUserPlay,
                                 firstPlayerCard: firstUserCard,
                                 secondPlayerCard: secondUserCard,
@@ -438,6 +844,23 @@ export default new Command({
                             });
                             break;
                         }
+                        if (thirdDealerPlay == thirdUserPlay) {
+                            drawPlay({
+                                interaction: buttonInteraction,
+                                draw: true,
+                                thirdUserPlay: thirdUserPlay,
+                                firstPlayerCard: firstUserCard,
+                                secondPlayerCard: secondUserCard,
+                                thirdPlayerCard: thirdUserCard,
+                                fourthPlayerCard: fourthUserCard,
+                                thirdDealerPlay: thirdDealerPlay,
+                                firstDealerCard: firstDealerCard,
+                                secondDealerCard: secondDealerCard,
+                                thirdDealerCard: thirdDealerCard,
+                                fourthDealerCard: fourthDealerCard
+                            });
+                            break;
+                        }
                         if (thirdDealerPlay > 21) {
                             drawPlay({
                                 interaction: buttonInteraction,
@@ -455,9 +878,81 @@ export default new Command({
                             });
                             break;
                         }
+                        if (fourthDealerPlay > thirdUserPlay && fourthDealerPlay <= 21) {
+                            drawPlay({
+                                interaction: buttonInteraction,
+                                userWin: false,
+                                thirdUserPlay: thirdUserPlay,
+                                firstPlayerCard: firstUserCard,
+                                secondPlayerCard: secondUserCard,
+                                thirdPlayerCard: thirdUserCard,
+                                fourthPlayerCard: fourthUserCard,
+
+                                fourthDealerPlay: fourthDealerPlay,
+                                firstDealerCard: firstDealerCard,
+                                secondDealerCard: secondDealerCard,
+                                thirdDealerCard: thirdDealerCard,
+                                fourthDealerCard: fourthDealerCard,
+                                fifthDealerCard: fifthDealerCard
+                            });
+                            break;
+                        }
+                        if (fourthDealerPlay == thirdUserPlay) {
+                            drawPlay({
+                                interaction: buttonInteraction,
+                                draw: true,
+                                thirdUserPlay: thirdUserPlay,
+                                firstPlayerCard: firstUserCard,
+                                secondPlayerCard: secondUserCard,
+                                thirdPlayerCard: thirdUserCard,
+                                fourthPlayerCard: fourthUserCard,
+
+                                fourthDealerPlay: fourthDealerPlay,
+                                firstDealerCard: firstDealerCard,
+                                secondDealerCard: secondDealerCard,
+                                thirdDealerCard: thirdDealerCard,
+                                fourthDealerCard: fourthDealerCard,
+                                fifthDealerCard: fifthDealerCard
+                            });
+                            break;
+                        }
+                        if (fourthDealerPlay > 21) {
+                            drawPlay({
+                                interaction: buttonInteraction,
+                                userWin: true,
+                                thirdUserPlay: thirdUserPlay,
+                                firstPlayerCard: firstUserCard,
+                                secondPlayerCard: secondUserCard,
+                                thirdPlayerCard: thirdUserCard,
+                                fourthPlayerCard: fourthUserCard,
+
+                                fourthDealerPlay: fourthDealerPlay,
+                                firstDealerCard: firstDealerCard,
+                                secondDealerCard: secondDealerCard,
+                                thirdDealerCard: thirdDealerCard,
+                                fourthDealerCard: fourthDealerCard,
+                                fifthDealerCard: fifthDealerCard
+                            });
+                            break;
+                        }
+                        drawPlay({
+                            interaction: buttonInteraction,
+                            userWin: true,
+                            thirdUserPlay: thirdUserPlay,
+                            firstPlayerCard: firstUserCard,
+                            secondPlayerCard: secondUserCard,
+                            thirdPlayerCard: thirdUserCard,
+                            fourthPlayerCard: fourthUserCard,
+
+                            fourthDealerPlay: fourthDealerPlay,
+                            firstDealerCard: firstDealerCard,
+                            secondDealerCard: secondDealerCard,
+                            thirdDealerCard: thirdDealerCard,
+                            fourthDealerCard: fourthDealerCard,
+                            fifthDealerCard: fifthDealerCard
+                        });
                         break;
                     }
-
                     if (countHits === 1) {
                         // aqui o dealer vai ganhar de primeira jogada
                         if (dealerPlay > secondUserPlay && dealerPlay <= 21) {
@@ -474,10 +969,10 @@ export default new Command({
                             });
                             break;
                         }
-                        if (dealerPlay > secondUserPlay && dealerPlay <= 21) {
+                        if (dealerPlay == secondUserPlay) {
                             drawPlay({
                                 interaction: buttonInteraction,
-                                userWin: false,
+                                draw: true,
                                 secondUserPlay: secondUserPlay,
                                 firstPlayerCard: firstUserCard,
                                 secondPlayerCard: secondUserCard,
@@ -492,6 +987,21 @@ export default new Command({
                             drawPlay({
                                 interaction: buttonInteraction,
                                 userWin: false,
+                                secondUserPlay: secondUserPlay,
+                                firstPlayerCard: firstUserCard,
+                                thirdPlayerCard: thirdUserCard,
+                                secondPlayerCard: secondUserCard,
+                                secondDealerPlay: secondDealerPlay,
+                                firstDealerCard: firstDealerCard,
+                                secondDealerCard: secondDealerCard,
+                                thirdDealerCard: thirdDealerCard
+                            });
+                            break;
+                        }
+                        if (secondDealerPlay == secondUserPlay) {
+                            drawPlay({
+                                interaction: buttonInteraction,
+                                draw: true,
                                 secondUserPlay: secondUserPlay,
                                 firstPlayerCard: firstUserCard,
                                 thirdPlayerCard: thirdUserCard,
@@ -534,6 +1044,22 @@ export default new Command({
                             });
                             break;
                         }
+                        if (thirdDealerPlay == secondUserPlay) {
+                            drawPlay({
+                                interaction: buttonInteraction,
+                                draw: true,
+                                secondUserPlay: secondUserPlay,
+                                firstPlayerCard: firstUserCard,
+                                secondPlayerCard: secondUserCard,
+                                thirdPlayerCard: thirdUserCard,
+                                thirdDealerPlay: thirdDealerPlay,
+                                firstDealerCard: firstDealerCard,
+                                secondDealerCard: secondDealerCard,
+                                thirdDealerCard: thirdDealerCard,
+                                fourthDealerCard: fourthDealerCard
+                            });
+                            break;
+                        }
                         if (thirdDealerPlay > 21) {
                             drawPlay({
                                 interaction: buttonInteraction,
@@ -550,9 +1076,77 @@ export default new Command({
                             });
                             break;
                         }
+                        if (fourthDealerPlay > secondUserPlay && fourthDealerPlay <= 21) {
+                            drawPlay({
+                                interaction: buttonInteraction,
+                                userWin: false,
+                                secondUserPlay: secondUserPlay,
+                                firstPlayerCard: firstUserCard,
+                                secondPlayerCard: secondUserCard,
+                                thirdPlayerCard: thirdUserCard,
+
+                                fourthDealerPlay: fourthDealerPlay,
+                                firstDealerCard: firstDealerCard,
+                                secondDealerCard: secondDealerCard,
+                                thirdDealerCard: thirdDealerCard,
+                                fourthDealerCard: fourthDealerCard,
+                                fifthDealerCard: fifthDealerCard
+                            });
+                            break;
+                        }
+                        if (fourthDealerPlay == secondUserPlay) {
+                            drawPlay({
+                                interaction: buttonInteraction,
+                                draw: true,
+                                secondUserPlay: secondUserPlay,
+                                firstPlayerCard: firstUserCard,
+                                secondPlayerCard: secondUserCard,
+                                thirdPlayerCard: thirdUserCard,
+
+                                fourthDealerPlay: fourthDealerPlay,
+                                firstDealerCard: firstDealerCard,
+                                secondDealerCard: secondDealerCard,
+                                thirdDealerCard: thirdDealerCard,
+                                fourthDealerCard: fourthDealerCard,
+                                fifthDealerCard: fifthDealerCard
+                            });
+                            break;
+                        }
+                        if (fourthDealerPlay > 21) {
+                            drawPlay({
+                                interaction: buttonInteraction,
+                                userWin: true,
+                                secondUserPlay: secondUserPlay,
+                                firstPlayerCard: firstUserCard,
+                                secondPlayerCard: secondUserCard,
+                                thirdPlayerCard: thirdUserCard,
+
+                                fourthDealerPlay: fourthDealerPlay,
+                                firstDealerCard: firstDealerCard,
+                                secondDealerCard: secondDealerCard,
+                                thirdDealerCard: thirdDealerCard,
+                                fourthDealerCard: fourthDealerCard,
+                                fifthDealerCard: fifthDealerCard
+                            });
+                            break;
+                        }
+                        drawPlay({
+                            interaction: buttonInteraction,
+                            userWin: true,
+                            secondUserPlay: secondUserPlay,
+                            firstPlayerCard: firstUserCard,
+                            secondPlayerCard: secondUserCard,
+                            thirdPlayerCard: thirdUserCard,
+
+                            fourthDealerPlay: fourthDealerPlay,
+                            firstDealerCard: firstDealerCard,
+                            secondDealerCard: secondDealerCard,
+                            thirdDealerCard: thirdDealerCard,
+                            fourthDealerCard: fourthDealerCard,
+                            fifthDealerCard: fifthDealerCard
+                        });
                         break;
                     }
-
                     // aqui o dealer vai ganhar de primeira jogada
                     if (dealerPlay > userPlay && dealerPlay <= 21) {
                         drawPlay({
@@ -567,10 +1161,37 @@ export default new Command({
                         });
                         break;
                     }
+                    if (dealerPlay == userPlay) {
+                        drawPlay({
+                            interaction: buttonInteraction,
+                            draw: true,
+                            userPlay: userPlay,
+                            firstPlayerCard: firstUserCard,
+                            secondPlayerCard: secondUserCard,
+                            dealerPlay: dealerPlay,
+                            firstDealerCard: firstDealerCard,
+                            secondDealerCard: secondDealerCard
+                        });
+                        break;
+                    }
                     if (secondDealerPlay > userPlay && secondDealerPlay <= 21) {
                         drawPlay({
                             interaction: buttonInteraction,
                             userWin: false,
+                            userPlay: userPlay,
+                            firstPlayerCard: firstUserCard,
+                            secondPlayerCard: secondUserCard,
+                            secondDealerPlay: secondDealerPlay,
+                            firstDealerCard: firstDealerCard,
+                            secondDealerCard: secondDealerCard,
+                            thirdDealerCard: thirdDealerCard
+                        });
+                        break;
+                    }
+                    if (secondDealerPlay == userPlay) {
+                        drawPlay({
+                            interaction: buttonInteraction,
+                            draw: true,
                             userPlay: userPlay,
                             firstPlayerCard: firstUserCard,
                             secondPlayerCard: secondUserCard,
@@ -602,6 +1223,23 @@ export default new Command({
                             userPlay: userPlay,
                             firstPlayerCard: firstUserCard,
                             secondPlayerCard: secondUserCard,
+
+                            secondDealerPlay: thirdDealerPlay,
+                            firstDealerCard: firstDealerCard,
+                            secondDealerCard: secondDealerCard,
+                            thirdDealerCard: thirdDealerCard,
+                            fourthDealerCard: fourthDealerCard
+                        });
+                        break;
+                    }
+                    if (thirdDealerPlay == userPlay) {
+                        drawPlay({
+                            interaction: buttonInteraction,
+                            draw: true,
+                            userPlay: userPlay,
+                            firstPlayerCard: firstUserCard,
+                            secondPlayerCard: secondUserCard,
+
                             secondDealerPlay: thirdDealerPlay,
                             firstDealerCard: firstDealerCard,
                             secondDealerCard: secondDealerCard,
@@ -617,6 +1255,7 @@ export default new Command({
                             userPlay: userPlay,
                             firstPlayerCard: firstUserCard,
                             secondPlayerCard: secondUserCard,
+
                             secondDealerPlay: thirdDealerPlay,
                             firstDealerCard: firstDealerCard,
                             secondDealerCard: secondDealerCard,
@@ -625,12 +1264,75 @@ export default new Command({
                         });
                         break;
                     }
-                    break;
+                    if (fourthDealerPlay > userPlay && fourthDealerPlay <= 21) {
+                        drawPlay({
+                            interaction: buttonInteraction,
+                            userWin: false,
+                            userPlay: userPlay,
+                            firstPlayerCard: firstUserCard,
+                            secondPlayerCard: secondUserCard,
 
+                            fourthDealerPlay: fourthDealerPlay,
+                            firstDealerCard: firstDealerCard,
+                            secondDealerCard: secondDealerCard,
+                            thirdDealerCard: thirdDealerCard,
+                            fourthDealerCard: fourthDealerCard,
+                            fifthDealerCard: fifthDealerCard
+                        });
+                        break;
+                    }
+                    if (fourthDealerPlay == userPlay) {
+                        drawPlay({
+                            interaction: buttonInteraction,
+                            draw: true,
+                            userPlay: userPlay,
+                            firstPlayerCard: firstUserCard,
+                            secondPlayerCard: secondUserCard,
+
+                            fourthDealerPlay: fourthDealerPlay,
+                            firstDealerCard: firstDealerCard,
+                            secondDealerCard: secondDealerCard,
+                            thirdDealerCard: thirdDealerCard,
+                            fourthDealerCard: fourthDealerCard,
+                            fifthDealerCard: fifthDealerCard
+                        });
+                        break;
+                    }
+                    if (fourthDealerPlay > 21) {
+                        drawPlay({
+                            interaction: buttonInteraction,
+                            userWin: true,
+                            userPlay: userPlay,
+                            firstPlayerCard: firstUserCard,
+                            secondPlayerCard: secondUserCard,
+
+                            fourthDealerPlay: fourthDealerPlay,
+                            firstDealerCard: firstDealerCard,
+                            secondDealerCard: secondDealerCard,
+                            thirdDealerCard: thirdDealerCard,
+                            fourthDealerCard: fourthDealerCard,
+                            fifthDealerCard: fifthDealerCard
+                        });
+                        break;
+                    }
+                    drawPlay({
+                        interaction: buttonInteraction,
+                        userWin: true,
+                        userPlay: userPlay,
+                        firstPlayerCard: firstUserCard,
+                        secondPlayerCard: secondUserCard,
+
+                        fourthDealerPlay: fourthDealerPlay,
+                        firstDealerCard: firstDealerCard,
+                        secondDealerCard: secondDealerCard,
+                        thirdDealerCard: thirdDealerCard,
+                        fourthDealerCard: fourthDealerCard,
+                        fifthDealerCard: fifthDealerCard
+                    });
+                    break;
                 case 'double':
-                    buttonInteraction.update({ content: "clicou no double"});
+                    buttonInteraction.update({ content: "clicou no double" });
                     break;
-
             }
 
         });
