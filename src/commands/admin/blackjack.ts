@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable no-case-declarations */
 /* eslint-disable indent */
-import { ActionRowBuilder, ApplicationCommandOptionType, ApplicationCommandType, ButtonBuilder, ButtonInteraction, ButtonStyle, CacheType, ColorResolvable, ComponentType, EmbedBuilder } from "discord.js";
+import { ActionRowBuilder, ApplicationCommandOptionType, ApplicationCommandType, ButtonBuilder, ButtonInteraction, ButtonStyle, CacheType, ColorResolvable, CommandInteraction, ComponentType, EmbedBuilder } from "discord.js";
 import { config } from "../..";
 import { db } from "../../data-source";
 import { Command } from "../../structs/types/Command";
@@ -57,7 +58,12 @@ export default new Command({
     async run({ interaction, options }) {
 
         const member = interaction.user;
-        const bet = options.getNumber('bet');
+        const storedPlay = await db.Blackjack.findOne({
+            where: {
+                userId: member.id
+            }
+        });
+        const bet = storedPlay? Number(storedPlay.bet) : options.getNumber('bet');
 
         const storedUser = await db.User.findOne({
             where: {
@@ -128,7 +134,8 @@ export default new Command({
             return Number(str.replace(/[^\d]/g, ''));
         }
 
-        function formatedCash(amount: number) {
+        function formatedCash(amount: number | undefined) {
+            if (!amount) return;
             let formated = amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
             if (Number(formated) >= 100) {
                 formated = formated.replace(',', '.');
@@ -136,27 +143,54 @@ export default new Command({
             return formated;
         }
 
-        const firstUserCard = getRandomEmoji(emojiCode) ?? resolvableEmoji;
-        const secondUserCard = getRandomEmoji(emojiCode) ?? resolvableEmoji;
-        const thirdUserCard = getRandomEmoji(emojiCode) ?? resolvableEmoji;
-        const fourthUserCard = getRandomEmoji(emojiCode) ?? resolvableEmoji;
-        const fifthUserCard = getRandomEmoji(emojiCode) ?? resolvableEmoji;
+        let countHits = 0;
+        const firstUserCard = storedPlay? storedPlay.firstPlayerCard : getRandomEmoji(emojiCode) ?? resolvableEmoji;
+        const secondUserCard = storedPlay? storedPlay.secondPlayerCard : getRandomEmoji(emojiCode) ?? resolvableEmoji;
+        const thirdUserCard = storedPlay? storedPlay.thirdPlayerCard : getRandomEmoji(emojiCode) ?? resolvableEmoji;
+        const fourthUserCard = storedPlay? storedPlay.fourthPlayerCard : getRandomEmoji(emojiCode) ?? resolvableEmoji;
+        const fifthUserCard = storedPlay? storedPlay.fifthPlayerCard : getRandomEmoji(emojiCode) ?? resolvableEmoji;
 
-        const firstDealerCard = getRandomEmoji(emojiCode) ?? resolvableEmoji;
-        const secondDealerCard = getRandomEmoji(emojiCode) ?? resolvableEmoji;
-        const thirdDealerCard = getRandomEmoji(emojiCode) ?? resolvableEmoji;
-        const fourthDealerCard = getRandomEmoji(emojiCode) ?? resolvableEmoji;
-        const fifthDealerCard = getRandomEmoji(emojiCode) ?? resolvableEmoji;
+        const firstDealerCard = storedPlay? storedPlay.firstDealerCard : getRandomEmoji(emojiCode) ?? resolvableEmoji;
+        const secondDealerCard = storedPlay? storedPlay.secondDealerCard : getRandomEmoji(emojiCode) ?? resolvableEmoji;
+        const thirdDealerCard = storedPlay? storedPlay.thirdDealerCard : getRandomEmoji(emojiCode) ?? resolvableEmoji;
+        const fourthDealerCard = storedPlay? storedPlay.fourthDealerCard : getRandomEmoji(emojiCode) ?? resolvableEmoji;
+        const fifthDealerCard = storedPlay? storedPlay.fifthDealerCard : getRandomEmoji(emojiCode) ?? resolvableEmoji;
 
-        const userPlay = removeLetters(firstUserCard.emoji) + removeLetters(secondUserCard.emoji);
-        const secondUserPlay = userPlay + removeLetters(thirdUserCard.emoji);
-        const thirdUserPlay = secondUserPlay + removeLetters(fourthUserCard.emoji);
-        const fourthUserPlay = thirdUserPlay + removeLetters(fifthUserCard.emoji);
+        const userPlay = storedPlay? storedPlay.userPlay : removeLetters(firstUserCard.emoji) + removeLetters(secondUserCard.emoji);
+        const secondUserPlay = storedPlay? storedPlay.secondUserPlay : userPlay + removeLetters(thirdUserCard.emoji);
+        const thirdUserPlay = storedPlay? storedPlay.thirdUserPlay : secondUserPlay + removeLetters(fourthUserCard.emoji);
+        const fourthUserPlay = storedPlay? storedPlay.fourthUserPlay : thirdUserPlay + removeLetters(fifthUserCard.emoji);
 
-        const dealerPlay = removeLetters(firstDealerCard.emoji) + removeLetters(secondDealerCard.emoji);
-        const secondDealerPlay = dealerPlay + removeLetters(thirdDealerCard.emoji);
-        const thirdDealerPlay = secondDealerPlay + removeLetters(fourthDealerCard.emoji);
-        const fourthDealerPlay = thirdDealerPlay + removeLetters(fifthDealerCard.emoji);
+        const dealerPlay = storedPlay? storedPlay.dealerPlay : removeLetters(firstDealerCard.emoji) + removeLetters(secondDealerCard.emoji);
+        const secondDealerPlay = storedPlay? storedPlay.secondDealerPlay : dealerPlay + removeLetters(thirdDealerCard.emoji);
+        const thirdDealerPlay = storedPlay? storedPlay.thirdDealerPlay : secondDealerPlay + removeLetters(fourthDealerCard.emoji);
+        const fourthDealerPlay = storedPlay? storedPlay.fourthDealerPlay : thirdDealerPlay + removeLetters(fifthDealerCard.emoji);
+
+        if (!storedPlay) {
+            await db.Blackjack.create({
+                bet: bet? bet : wallet,
+                dealerPlay: dealerPlay,
+                secondDealerPlay: secondDealerPlay,
+                thirdDealerPlay: thirdDealerPlay,
+                fourthDealerPlay: fourthDealerPlay,
+                firstDealerCard: firstDealerCard,
+                secondDealerCard: secondDealerCard,
+                thirdDealerCard: thirdDealerCard,
+                fourthDealerCard: fourthDealerCard,
+                fifthDealerCard: fifthDealerCard,
+
+                userPlay: userPlay,
+                secondUserPlay: secondUserPlay,
+                thirdUserPlay: thirdUserPlay,
+                fourthUserPlay: fourthUserPlay,
+                firstPlayerCard: firstUserCard,
+                secondPlayerCard: secondUserCard,
+                thirdPlayerCard: thirdUserCard,
+                fourthPlayerCard: fourthUserCard,
+                fifthPlayerCard: fifthUserCard,
+                userId: member.id
+            });
+        }
 
         async function drawPlay({ userWin, firstPlayerCard, secondPlayerCard, thirdDealerCard, fourthPlayerCard, fifthPlayerCard, userPlay, secondUserPlay, thirdUserPlay, fourthUserPlay, firstDealerCard, interaction, secondDealerCard, thirdPlayerCard, fourthDealerCard, fifthDealerCard, dealerPlay, secondDealerPlay, thirdDealerPlay, fourthDealerPlay, continueInteraction, lastPlay, draw }: PlayProps) {
             secondUserPlay = secondUserPlay === undefined ? 0 : secondUserPlay;
@@ -175,6 +209,7 @@ export default new Command({
                 });
 
                 interaction.update({
+                    content: '',
                     embeds: [
                         new EmbedBuilder({
                             title: "Blackjack",
@@ -196,6 +231,7 @@ export default new Command({
 
             if (continueInteraction) {
                 interaction.update({
+                    content: '',
                     embeds: [
                         new EmbedBuilder({
                             title: "Blackjack",
@@ -216,7 +252,13 @@ export default new Command({
             }
 
             if (draw) {
+                await db.Blackjack.destroy({
+                    where: {
+                        userId: member.id
+                    }
+                });
                 interaction.update({
+                    content: '',
                     embeds: [
                         new EmbedBuilder({
                             title: "Blackjack",
@@ -230,7 +272,7 @@ export default new Command({
                         **Dealer | ${dealerTotalSum}**
                         ${firstDealerCard?.value} ${secondDealerCard ? secondDealerCard.value : ''} ${thirdDealerCard ? thirdDealerCard.value : ''} ${fourthDealerCard ? fourthDealerCard.value : ''} ${fifthDealerCard ? fifthDealerCard.value : ''}
 
-                        You had no wins or losses.
+                        You had no gains or losses.
 
                         **DRAW**
                         `
@@ -246,8 +288,13 @@ export default new Command({
                 }, {
                     where: { id: storedUser?.bankId }
                 });
-
+                await db.Blackjack.destroy({
+                    where: {
+                        userId: member.id
+                    }
+                });
                 interaction.update({
+                    content: '',
                     embeds: [
                         new EmbedBuilder({
                             title: "Blackjack",
@@ -278,7 +325,13 @@ export default new Command({
                 where: { id: storedUser?.bankId }
             });
 
+            await db.Blackjack.destroy({
+                where: {
+                    userId: member.id
+                }
+            });
             interaction.update({
+                content: '',
                 embeds: [
                     new EmbedBuilder({
                         title: "Blackjack",
@@ -302,8 +355,6 @@ export default new Command({
             });
             return;
         }
-
-        let countHits = 0;
 
         /**
          * TODO: Make this condition when you fix ace value to variable between 11 and 1.
@@ -343,15 +394,26 @@ export default new Command({
             ${firstUserCard.value} ${secondUserCard.value}
             **Dealer | ${removeLetters(firstDealerCard.emoji)}**
             ${firstDealerCard.value}
+
+            ${storedPlay? "**Bet:** "+ formatedCash(parseFloat(String(storedPlay.bet))) : ''}
             `
         });
-        const msg = await interaction.reply({ embeds: [embed], components: [row], fetchReply: true });
+        const msg = await interaction.reply({ content: storedPlay? `Continue sua jogada anterior...` : "" , embeds: [embed], components: [row], fetchReply: true });
 
         const collector = msg.createMessageComponentCollector({
             componentType: ComponentType.Button
         });
 
         collector.on('collect', async (buttonInteraction) => {
+
+            const lastMessageId = interaction.channel?.lastMessageId;
+            const buttonInteracionMessageId = buttonInteraction.message.id;
+
+            if (lastMessageId !== buttonInteracionMessageId) {
+                buttonInteraction.update({ content: "Por favor, interaja apenas com o comando atual...", embeds: [], components: [] });
+                return;
+            }
+
             const { user } = buttonInteraction;
 
             if (user.id != member.id) {
@@ -451,7 +513,6 @@ export default new Command({
                         break;
                     }
                     if (secondUserPlay > 21) {
-
                         drawPlay({
                             interaction: buttonInteraction,
                             userWin: false,
@@ -1334,7 +1395,6 @@ export default new Command({
                     buttonInteraction.update({ content: "clicou no double" });
                     break;
             }
-
         });
     }
 });
