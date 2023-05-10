@@ -1,5 +1,4 @@
-import { ApplicationCommandOptionType, ApplicationCommandType, ColorResolvable, EmbedBuilder } from "discord.js";
-import { config } from "../..";
+import { ApplicationCommandOptionType, ApplicationCommandType } from "discord.js";
 import { db, sequelize } from "../../data-source";
 import { Command } from "../../structs/types/Command";
 
