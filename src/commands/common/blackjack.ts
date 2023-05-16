@@ -3,8 +3,9 @@
 /* eslint-disable indent */
 import { ActionRowBuilder, ApplicationCommandOptionType, ApplicationCommandType, ButtonBuilder, ButtonInteraction, ButtonStyle, CacheType, ColorResolvable, CommandInteraction, ComponentType, EmbedBuilder } from "discord.js";
 import { config } from "../..";
-import { db } from "../../data-source";
+import { db, sequelize } from "../../data-source";
 import { Command } from "../../structs/types/Command";
+import { userGameInteraction } from "../../utils/UserGameInteraction";
 
 interface PlayProps {
     countHits?: number;
@@ -293,6 +294,7 @@ export default new Command({
                         userId: member.id
                     }
                 });
+                await userGameInteraction.blackjackWin(storedUser?.gameId);
                 interaction.update({
                     content: '',
                     embeds: [
@@ -330,6 +332,7 @@ export default new Command({
                     userId: member.id
                 }
             });
+            await userGameInteraction.blackjackLoss(storedUser?.gameId);
             interaction.update({
                 content: '',
                 embeds: [

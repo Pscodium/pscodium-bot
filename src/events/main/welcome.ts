@@ -15,13 +15,17 @@ export default new Event({
             return;
         }
         const bank = await db.Bank.create();
-        db.User.create({
+        const game = await db.Game.create();
+        const user = await db.User.create({
             id: interaction.user.id,
             bot: interaction.user.bot,
             username: interaction.user.username,
             discriminator: interaction.user.discriminator,
-            userTag: interaction.user.tag,
-            bankId: bank.dataValues.id
+            userTag: interaction.user.tag
         });
+        user.setBank(bank);
+        user.setGame(game);
+        bank.save();
+        game.save();
     }
 });

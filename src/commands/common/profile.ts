@@ -2,6 +2,7 @@ import { ApplicationCommandOptionType, ApplicationCommandType, ColorResolvable, 
 import { client, config } from "../..";
 import { Command } from "../../structs/types/Command";
 import moment from "moment";
+import { db } from "../../data-source";
 
 
 export default new Command({
@@ -35,32 +36,84 @@ export default new Command({
 
         const roles = member?.roles.cache;
 
+        const user = await db.User.findOne({ where: { id: mention? mention.id : interaction.user.id }, include: [ {model: db.Game } ]});
+        if (!user) return;
+
+        const gameProfile = user.game;
+        if (!gameProfile) return;
+
         const rolesString2 = roles?.map(role => `**${role.name}**`).join(", ") || "Nenhuma";
 
         const embed = new EmbedBuilder()
-            .setTitle(`Profile of ${mention? mention.tag : interaction.user.tag}`)
+            .setTitle(`Profile of ${mention? mention.username : interaction.user.username}`)
             .setAuthor({
                 name: interaction.user.username,
 
                 iconURL: interaction.user.avatarURL() || undefined,
             })
             .setThumbnail(mention? mention.avatarURL() : interaction.user.avatarURL())
+            .setDescription(`
+            **Nickname:**
+            ${nickname}
+
+            **Account created ago:**
+            ${now.diff(testeDATE, 'days')} dias
+
+            **Time on this fucking server:**
+            ${now.diff(joinedAt, 'days')} dias
+
+            **Roles:**
+            ${rolesString2}
+
+
+            __**Game Profile**__
+
+            `)
             .setFields(
                 {
-                    name: "Nickname:",
-                    value: `${nickname}`
+                    name: "Blackjack Wins",
+                    value: String(gameProfile.blackjack_wins),
+                    inline: true
                 },
                 {
-                    name: "Account created ago:",
-                    value: `${now.diff(testeDATE, 'days')} dias`
+                    name: "Blackjack Losses",
+                    value: String(gameProfile.blackjack_losses),
+                    inline: true
                 },
                 {
-                    name: "Time on this fucking server:",
-                    value: `${now.diff(joinedAt, 'days')} dias`
+                    name: "Ratio",
+                    value: String(gameProfile.blackjack_ratio),
+                    inline: true
                 },
                 {
-                    name: "Roles:",
-                    value: `${rolesString2}`
+                    name: "Crash Wins",
+                    value: String(gameProfile.crash_wins),
+                    inline: true
+                },
+                {
+                    name: "Crash Losses",
+                    value: String(gameProfile.crash_losses),
+                    inline: true
+                },
+                {
+                    name: "Ratio",
+                    value: String(gameProfile.crash_ratio),
+                    inline: true
+                },
+                {
+                    name: "Total Wins",
+                    value: String(gameProfile.total_wins),
+                    inline: true
+                },
+                {
+                    name: "Total Losses",
+                    value: String(gameProfile.total_losses),
+                    inline: true
+                },
+                {
+                    name: "Ratio",
+                    value: String(gameProfile.total_ratio),
+                    inline: true
                 }
             )
             .setColor(config.colors.blue as ColorResolvable);
