@@ -1,7 +1,8 @@
 import { ApplicationCommandOptionType, ApplicationCommandType, ColorResolvable, EmbedBuilder } from "discord.js";
 import { config } from "../..";
-import { db } from "../../data-source";
+import { db, sequelize } from "../../data-source";
 import { Command } from "../../structs/types/Command";
+import { userGameInteraction } from "../../utils/UserGameInteraction";
 
 export default new Command({
     name: "crash",
@@ -110,6 +111,7 @@ export default new Command({
             }, {
                 where: { id: bankId }
             });
+            await userGameInteraction.crashWin(member.gameId);
 
             const embed = new EmbedBuilder({
                 title: "Você ganhou!!",
@@ -139,6 +141,7 @@ export default new Command({
             }, {
                 where: { id: bankId }
             });
+            await userGameInteraction.crashLoss(member.gameId);
 
             const embed = new EmbedBuilder({
                 title: "Você Perdeu!!",

@@ -27,15 +27,18 @@ export default new Command({
                 return;
             }
             const bank = await db.Bank.create();
-            await db.User.create({
+            const game = await db.Game.create();
+            const user = await db.User.create({
                 id: member.user.id,
                 bot: member.user.bot,
                 username: member.user.username,
                 discriminator: member.user.discriminator,
                 userTag: member.user.tag,
-                bankId: bank.dataValues.id
             });
+            user.setGame(game);
+            user.setBank(bank);
             bank.save();
+            game.save();
         });
 
 
