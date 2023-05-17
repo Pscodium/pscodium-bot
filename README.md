@@ -1,6 +1,9 @@
-# Pscodium Bot
+# Pscodium Bot v1.15
+
+[[_TOC_]]
 
 ## Dependencies
+
 - Typescript
 - Discords.js
 - NodeJS
@@ -14,7 +17,6 @@
 ## Environment Variables
 
 ```
-
 BOT_TOKEN="Your-Token"
 
 DB_HOST=db
@@ -33,8 +35,6 @@ DB_NAME=database
 2. `npm install`
 
 3. `make up && make logs` (to view logs)
-
-
 
 ## Versions
 
@@ -78,6 +78,7 @@ DB_NAME=database
 - v0.01 - Project creation.
 
 ## Possible Features
+
 - Leveling system for the users rewards.
 - Daily Rewards.
 - Commands cooldown.
@@ -87,13 +88,21 @@ DB_NAME=database
 - Store in user database the users games information (wins, loses, ratio etc)
 
 ## Commands Version
+
 - Blackjack v1 - Command under tests.
-  - Create a tie between dealer and user.
   - Create more moves and store all the possibilities.
   - If user writes command but doesn't play, store current move in database to avoid players cheating games.
   - Create the double down button interaction.
 - Blackjack v1.0.1 - Command under tests.
+  - Create a tie between dealer and user.
+  - Change max cards to five.
+  - Fix dealer moves because it broke the system when clicking "stand" and because it didn't have some game logic.
+
+- Blackjack v1.0.2 - Command under tests.
+
   - Create blackjack database to store user plays.
+  - Create Emoji database to store all emojis list.
+
   - If user writes command but doesn't play, store current move in database to avoid players cheating games.
 
 - Crash v1 - Command created and working.
@@ -103,5 +112,65 @@ DB_NAME=database
 - Dice v1 - Command under creation and will need trial versions.
   - Create an award system for consecutive victories.
 
-## Hotfixes
+## Plans
 
+Think about new plans for this discord bot.
+
+### Future plans
+
+- [ ] Command to add verified emblem to user profile.
+
+- [ ] Create more database information to users
+- [x] Addition of Blackjack command
+  - [x] Create a database to store users plays
+  - [x] Create advanced plays to game
+  - [x] Create an embed to display
+  - [x] Create emojis for blackjack cards
+  - [x] Create new colors script
+  - [x] Create system to reward player for wins
+  - [ ] Create leveling system
+
+- [x] Database for games scoreboard.
+  - [x] This database will need columns for describe how many games users plays, wins and losses.
+  - [ ] This database will be used for leveling based on players wins.
+
+- [ ] Maybe consider to make more lucky games
+  - [ ] Dice
+  - [ ] Rock Papel Scissors
+  - [ ] Loterry
+
+- [ ] Games to think about
+  - [ ] RPG Game
+    - [ ] Balance
+    - [ ] Profile
+    - [ ] Rank
+    - [ ] Inventory
+    - [ ] Bank
+    - [ ] Adventure
+    - [ ] Hunt
+    - [ ] Chopper
+    - [ ] Fishing
+    - [ ] Case opening
+    - [ ] Duel
+    - [ ] Dungeon
+    - [ ] Enchanting
+    - [ ] Forge 
+  - [ ] Logic game
+    - [ ] Questions
+    - [ ] Maths
+
+### Database plans
+
+- [ ] Create more associations for the user table.
+- [ ] Scoreboard games table.
+- [x] Games table.
+- [ ] Command cooldown based on timestamp column from database game table.
+
+- [ ] Table games need more columns to complement
+  - [ ] Level
+  - [ ] Experience
+  - [ ] Life
+  - [ ] Defense
+  - [ ] Achievements
+  - [ ] Emblems
+  - [ ] Attack Power
