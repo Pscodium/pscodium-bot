@@ -1,6 +1,9 @@
 import { db, sequelize } from "../data-source";
 
-
+interface WinsAchievement {
+    wins: number | null;
+    id: number | undefined;
+}
 class UserGameInteraction {
 
     async blackjackWin(id: number | undefined) {
@@ -14,6 +17,8 @@ class UserGameInteraction {
                 id: id
             }
         });
+
+        await this.getAchievementListener(id);
     }
 
     async blackjackLoss(id: number | undefined) {
@@ -40,6 +45,8 @@ class UserGameInteraction {
                 id: id
             }
         });
+
+        await this.getAchievementListener(id);
     }
 
     async crashLoss(id: number | undefined) {
@@ -53,6 +60,51 @@ class UserGameInteraction {
                 id: id
             }
         });
+    }
+
+    async winsToGetAchievement(): Promise<WinsAchievement[]> {
+        const achievement = await db.Achievement.findAll({
+            where: {
+                type: 'wins'
+            }
+        });
+
+        const wins = achievement.map(result => {
+            return { wins: result.wins_to_reach, id: result.id };
+        });
+
+        return wins;
+    }
+
+    async getAchievementListener(id: number | undefined) {
+        const gameProfile = await db.Game.findOne({
+            where: {
+                id: id
+            },
+        });
+        if (!gameProfile) return;
+        const wins = gameProfile.total_wins;
+
+        const possibleWins = await this.winsToGetAchievement();
+
+        for( const mission of possibleWins ) {
+            if (mission.wins && wins >= mission.wins) {
+                const user = await db.User.findOne({
+                    where: {
+                        gameId: id
+                    }
+                });
+                const achievement = await db.Achievement.findOne({
+                    where: {
+                        id: mission.id
+                    }
+                });
+
+                if (user && achievement) {
+                    await user.addAchievement(achievement);
+                }
+            }
+        }
     }
 
 }

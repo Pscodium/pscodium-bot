@@ -3,9 +3,12 @@ import { Sequelize } from "sequelize";
 import dotenv = require('dotenv');
 import User from "./models/tables/User";
 import Bank from "./models/tables/Bank";
-import Emoji from "./models/tables/Emoji";
 import Blackjack from "./models/tables/Blackjack";
 import Game from "./models/tables/Games";
+import Cards from "./models/tables/Cards";
+import Badges from "./models/tables/Badges";
+import Achievements from "./models/tables/Achievements";
+import UserAchievements from "./models/tables/UserAchievements";
 dotenv.config();
 
 const sequelize = new Sequelize(String(process.env.DB_NAME), String(process.env.DB_USER), String(process.env.DB_PASSWORD), {
@@ -16,8 +19,11 @@ const sequelize = new Sequelize(String(process.env.DB_NAME), String(process.env.
 const db = {
     User: User(sequelize),
     Bank: Bank(sequelize),
-    Emoji: Emoji(sequelize),
+    Card: Cards(sequelize),
     Blackjack: Blackjack(sequelize),
+    Badge: Badges(sequelize),
+    Achievement: Achievements(sequelize),
+    UserAchievements: UserAchievements(sequelize),
     Game: Game(sequelize)
 };
 
@@ -33,6 +39,8 @@ db.User.belongsTo(db.Game, {
     foreignKey: "gameId",
     constraints: true
 });
+db.User.belongsToMany(db.Achievement, { through: db.UserAchievements, foreignKey: 'userId'});
+db.Achievement.belongsToMany(db.User, { through: db.UserAchievements, foreignKey: 'achievementId'});
 
 sequelize.sync({ alter: true }).then(() => {
     console.log('Todas as tabelas foram sincronizadas.');

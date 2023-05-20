@@ -26,8 +26,6 @@ interface GamesAttributes {
 export interface GamesInstance extends Model<GamesAttributes>, GamesAttributes {}
 
 export default function Game(sequelize: Sequelize) {
-
-
     const Game = sequelize.define<GamesInstance>("games", {
         id: {
             type: DataTypes.INTEGER,
@@ -55,7 +53,7 @@ export default function Game(sequelize: Sequelize) {
             defaultValue: 0
         },
         total_ratio: {
-            type: DataTypes.DECIMAL(3, 2),
+            type: DataTypes.DECIMAL(20, 2),
             defaultValue: 1
         },
         blackjack_wins: {
@@ -67,7 +65,7 @@ export default function Game(sequelize: Sequelize) {
             defaultValue: 0
         },
         blackjack_ratio: {
-            type: DataTypes.DECIMAL(3, 2),
+            type: DataTypes.DECIMAL(20, 2),
             defaultValue: 1
         },
         dice_wins: {
@@ -79,7 +77,7 @@ export default function Game(sequelize: Sequelize) {
             defaultValue: 0
         },
         dice_ratio: {
-            type: DataTypes.DECIMAL(3, 2),
+            type: DataTypes.DECIMAL(20, 2),
             defaultValue: 1
         },
         crash_wins: {
@@ -91,7 +89,7 @@ export default function Game(sequelize: Sequelize) {
             defaultValue: 0
         },
         crash_ratio: {
-            type: DataTypes.DECIMAL(3, 2),
+            type: DataTypes.DECIMAL(20, 2),
             defaultValue: 1
         }
     });

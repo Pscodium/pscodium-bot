@@ -1,17 +1,15 @@
 import { DataTypes, Model, Sequelize } from "sequelize";
 
-interface EmojiAttributes {
+interface CardsAttributes {
     emoji: string;
     value: string;
     id?: number;
 }
 
-export interface EmojiInstance extends Model<EmojiAttributes>, EmojiAttributes {}
+export interface CardsInstance extends Model<CardsAttributes>, CardsAttributes {}
 
-export default function Emoji(sequelize: Sequelize) {
-
-
-    const Emoji = sequelize.define<EmojiInstance>("emoji", {
+export default function Cards(sequelize: Sequelize) {
+    const Cards = sequelize.define<CardsInstance>("cards", {
         id: {
             type: DataTypes.INTEGER,
             primaryKey: true,
@@ -24,5 +22,5 @@ export default function Emoji(sequelize: Sequelize) {
             type: DataTypes.STRING,
         },
     });
-    return Emoji;
+    return Cards;
 }

@@ -12,8 +12,6 @@ export interface TransactionInstance extends Model<TransactionAttributes>, Trans
 }
 
 export default function Bank(sequelize: Sequelize) {
-
-
     const Bank = sequelize.define<TransactionInstance>("bank", {
         id: {
             type: DataTypes.INTEGER,

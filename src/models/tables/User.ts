@@ -1,4 +1,5 @@
 import { DataTypes, Model, Sequelize } from "sequelize";
+import { AchievementsInstance } from "./Achievements";
 import { TransactionInstance } from "./Bank";
 import { GamesInstance } from "./Games";
 
@@ -13,10 +14,13 @@ interface UsersAttributes {
 }
 
 interface UserIntance extends Model<UsersAttributes>, UsersAttributes {
+    getAchievements(): Promise<AchievementsInstance[]>;
+    addAchievement(achievement: AchievementsInstance): unknown;
     setGame(game: GamesInstance): unknown;
     setBank(bank: TransactionInstance): unknown;
     bank: TransactionInstance;
     game: GamesInstance;
+    achievements: AchievementsInstance;
 }
 
 export default function User(sequelize: Sequelize) {

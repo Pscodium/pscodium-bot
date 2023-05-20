@@ -1,6 +1,4 @@
-# Pscodium Bot v1.15
-
-[[_TOC_]]
+# Pscodium Bot v1.16
 
 ## Dependencies
 
@@ -36,7 +34,20 @@ DB_NAME=database
 
 3. `make up && make logs` (to view logs)
 
+## Initialization
+
+#### After start this project do you need to set somethings.
+
+- To populate the **Cards** table for blackjack plays, you need to run `/cards-loader` in root server of this bot.
+
+- Enter in the server where is located the achievements badges (Emojis from another discord server).
+- Use `/badges-loader` to get this badges and insert this information in **Bagdes** table.
+- Create at least one achievement using `/achievement` and some additional information to create a achievement.
+- After create some achievement you can use `/give-achievement` command to send achievement for another user.
+
 ## Versions
+
+- v0.16 - Added Achievements system to rewards players.
 
 - v0.15 - Added `/blackjack` and `/emoji` command tests.
 
@@ -165,12 +176,27 @@ Think about new plans for this discord bot.
 - [ ] Scoreboard games table.
 - [x] Games table.
 - [ ] Command cooldown based on timestamp column from database game table.
-
-- [ ] Table games need more columns to complement
+- [x] Table Achievements.
+- [ ] Table game need more columns to complement
   - [ ] Level
   - [ ] Experience
   - [ ] Life
   - [ ] Defense
-  - [ ] Achievements
   - [ ] Emblems
   - [ ] Attack Power
+
+### Database security
+
+**Avoid deleting columns of these tables**
+
+- Achievements
+- Cards
+- Badges
+
+**Tables that can have columns deleted**
+
+- Users
+- Games
+- Banks
+- Blackjacks
+- User_achievements

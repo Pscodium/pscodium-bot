@@ -104,7 +104,7 @@ export default new Command({
             components: [ hit, stand, doubleDown ]
         });
 
-        const emojiList = await db.Emoji.findAll();
+        const emojiList = await db.Card.findAll();
 
         const emojiCode: EmojiCode[] = emojiList.map(emoji => {
             return { emoji: emoji.emoji, value: emoji.value };
