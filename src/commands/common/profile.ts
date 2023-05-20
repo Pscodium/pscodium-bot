@@ -1,3 +1,4 @@
+/* eslint-disable indent */
 import { ApplicationCommandOptionType, ApplicationCommandType, ColorResolvable, EmbedBuilder } from "discord.js";
 import { client, config } from "../..";
 import { Command } from "../../structs/types/Command";
@@ -32,12 +33,26 @@ export default new Command({
 
         const joinedAt = member?.joinedAt;
 
-        const nickname = member?.nickname;
+        const nickname = member?.user.username;
 
         const roles = member?.roles.cache;
 
-        const user = await db.User.findOne({ where: { id: mention? mention.id : interaction.user.id }, include: [ {model: db.Game } ]});
+        const user = await db.User.findOne({
+            where: {
+                id: mention? mention.id : interaction.user.id
+            },
+            include: [
+                { model: db.Game },
+                'achievements'
+            ]
+        });
         if (!user) return;
+
+        const achievements = await user.getAchievements();
+
+        const achievementsLabel = achievements.map(achievement => {
+            return { id: achievement.id, name: achievement.name, description: achievement.description, emoji: achievement.emoji, emoji_value: achievement.emoji_value };
+        });
 
         const gameProfile = user.game;
         if (!gameProfile) return;
@@ -65,6 +80,10 @@ export default new Command({
             **Roles:**
             ${rolesString2}
 
+            **Achievements:**
+            ${achievementsLabel.map(achievement => {
+                return achievement.emoji_value;
+            }). join(', ').replace(/,/g, '')}
 
             __**Game Profile**__
 

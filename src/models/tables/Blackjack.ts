@@ -36,8 +36,6 @@ interface BlackjackAttributes {
 export interface BlackjackInstance extends Model<BlackjackAttributes>, BlackjackAttributes {}
 
 export default function Bank(sequelize: Sequelize) {
-
-
     const Bank = sequelize.define<BlackjackInstance>("blackjack", {
         id: {
             type: DataTypes.INTEGER,
