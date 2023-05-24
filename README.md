@@ -131,7 +131,9 @@ Think about new plans for this discord bot.
 
 - [ ] Command to add verified emblem to user profile.
 
-- [ ] Create more database information to users
+- [ ] Create more database information to users.
+- [ ] Role change logs.
+- [ ] Autorole.
 - [x] Addition of Blackjack command
   - [x] Create a database to store users plays
   - [x] Create advanced plays to game
@@ -199,4 +201,4 @@ Think about new plans for this discord bot.
 - Games
 - Banks
 - Blackjacks
-- User_achievements
+- User
