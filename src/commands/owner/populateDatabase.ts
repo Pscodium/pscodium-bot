@@ -25,9 +25,9 @@ export default new Command({
             return;
         }
 
-        await databaseStructureCreator.populateAchievements();
-        await databaseStructureCreator.populateBadges();
         await databaseStructureCreator.populateCards();
+        await databaseStructureCreator.populateBadges();
+        await databaseStructureCreator.populateAchievements();
 
         interaction.reply({ content: `## Tabelas foram populadas`, ephemeral: true });
 
