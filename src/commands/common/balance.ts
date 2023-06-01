@@ -2,6 +2,7 @@ import { ApplicationCommandOptionType, ApplicationCommandType, ColorResolvable, 
 import { config } from "../..";
 import { db } from "../../data-source";
 import { Command } from "../../structs/types/Command";
+import { userBankManager } from "../../utils/UserBankManager";
 
 
 
@@ -38,16 +39,8 @@ export default new Command({
 
         const userBank = user.bank;
 
-        const account = parseFloat(String(userBank.bank));
-        const wallet = parseFloat(String(userBank.balance));
-
-        function formatedCash(amount: number) {
-            let formated = amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-            if(Number(formated) >= 100) {
-                formated = formated.replace(',', '.');
-            }
-            return formated;
-        }
+        const account = userBank.bank;
+        const wallet = userBank.balance;
 
         const embed = new EmbedBuilder()
             .setTitle("Bank Account")
@@ -59,11 +52,11 @@ export default new Command({
             .setFields(
                 {
                     name: "Bank",
-                    value: `Value: ${formatedCash(account)}`
+                    value: `Value: ${userBankManager.formatedCash(account)}`
                 },
                 {
                     name: "Wallet",
-                    value: `Value: ${formatedCash(wallet)}`
+                    value: `Value: ${userBankManager.formatedCash(wallet)}`
                 }
             )
             .setColor(config.colors.blue as ColorResolvable);

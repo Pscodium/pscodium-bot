@@ -6,11 +6,6 @@ import { Command } from "../../structs/types/Command";
 import { achievementManager } from "../../utils/AchievementManager";
 import { getBadgesForChoices } from "../../utils/GetBadgesForChoices";
 
-// async function getChoices() {
-//     const choices = await getBadgesForChoices.getBadgesFromDatabase()
-//     return choices
-// }
-
 const choices = Object.keys(AchievementTypes).map(type => ({
     name: type.charAt(0).toLocaleUpperCase() + type.slice(1).toLowerCase(),
     value: type
@@ -57,6 +52,12 @@ export default new Command({
             description: "Plays to reach this achievement.",
             type: ApplicationCommandOptionType.Integer,
             required: false,
+        },
+        {
+            name: "money",
+            description: "Money to reach this achievement.",
+            type: ApplicationCommandOptionType.Number,
+            required: false
         }
     ],
     async run({interaction, options}) {
@@ -70,6 +71,7 @@ export default new Command({
         const level = options.getInteger("level");
         const wins = options.getInteger("wins");
         const plays = options.getInteger("plays");
+        const money = options.getNumber("money");
 
         if (!type || !name || !description) return;
         if (!member) return;
@@ -85,6 +87,7 @@ export default new Command({
 
         const firstList = await getBadgesForChoices.getFirstTwentyFiveBadges();
         const secondList = await getBadgesForChoices.getSecondTwentyFiveBadges();
+        const thirdList = await getBadgesForChoices.getThirdTwentyFiveBadges();
 
         if (!firstList || !secondList) return;
 
@@ -107,7 +110,17 @@ export default new Command({
             ]
         });
 
-        const msg = await interaction.reply({ content: "Selecione algum ícone dessas listas", components: [row, secondRow], fetchReply: true, ephemeral: true });
+        const thirdRow = new ActionRowBuilder<StringSelectMenuBuilder>({
+            components: [
+                new StringSelectMenuBuilder({
+                    custom_id: 'third-list',
+                    placeholder: "Select a Icon/Badge",
+                    options: thirdList
+                })
+            ]
+        });
+
+        const msg = await interaction.reply({ content: "Selecione algum ícone dessas listas", components: [row, secondRow, thirdRow], fetchReply: true, ephemeral: true });
 
         const collector = msg.createMessageComponentCollector({ componentType: ComponentType.StringSelect });
 
@@ -129,6 +142,7 @@ export default new Command({
                         level_to_reach: level? level : 0,
                         wins_to_reach: wins? wins : 0,
                         plays_to_reach:plays? plays : 0,
+                        money_to_reach: money? money : 0,
                         name: name,
                         description: description,
                     });
@@ -172,7 +186,53 @@ export default new Command({
                         type: type as AchievementTypes,
                         level_to_reach: level? level : 0,
                         wins_to_reach: wins? wins : 0,
-                        plays_to_reach:plays? plays : 0,
+                        plays_to_reach: plays? plays : 0,
+                        money_to_reach: money? money : 0,
+                        name: name,
+                        description: description,
+                    });
+
+                    setTimeout(() => {
+                        selectInteraction.followUp({ ephemeral: true, components: [], embeds: [
+                            new EmbedBuilder({
+                                title: "Achievement criado com sucesso",
+                                description: ` __**Seu novo achievement**__
+                                - **Nome da Conquista**: ${name}
+                                - **Descrição da Conquista**: ${description}
+                                - **Tipo da Conquista**: ${type.charAt(0).toLocaleUpperCase() + type.slice(1).toLowerCase()}
+                                - **Nível para alcançar**: ${level ? ` ${level}` : `Nenhum`}
+                                - **Vezes jogadas para alcançar**: ${plays ? `${plays}` : `Nenhuma`}
+                                - **Jogadas ganhas para alcançar**: ${wins ? `${wins}` : `Nenhuma`}
+
+                                - **Emoji**: ${badge.value}
+                                - **Nome do Emoji**: ${badge.emoji}
+                                `,
+                                author: {
+                                    name: interaction.user.tag,
+                                    iconURL: interaction.user.avatarURL() || undefined,
+                                }
+                            }).setColor(config.colors.green as ColorResolvable)
+                        ] });
+
+                    }, 1000);
+                    break;
+                }
+                case "third-list": {
+                    const value = selectInteraction.values[0];
+
+                    await selectInteraction.update({ content: ":clock10: Carregando seu emoji...", components: [] });
+
+                    const badge = await achievementManager.getBadgeFromDatabase(value);
+                    if (!badge) return;
+
+                    await achievementManager.createAchievement({
+                        emoji: badge.emoji,
+                        emoji_value: badge.value,
+                        type: type as AchievementTypes,
+                        level_to_reach: level? level : 0,
+                        wins_to_reach: wins? wins : 0,
+                        plays_to_reach: plays? plays : 0,
+                        money_to_reach: money? money : 0,
                         name: name,
                         description: description,
                     });

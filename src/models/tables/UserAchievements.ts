@@ -2,6 +2,8 @@ import { DataTypes, Model, Sequelize } from "sequelize";
 
 export interface UserAchievementsAttributes {
     id?: number;
+    userId?: string;
+    achievementId?: number;
 }
 
 export interface UserAchievementsInstance extends Model<UserAchievementsAttributes>, UserAchievementsAttributes {}

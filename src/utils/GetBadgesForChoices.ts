@@ -32,5 +32,18 @@ class GetBadgesForChoices {
 
         return emojiCode;
     }
+
+    async getThirdTwentyFiveBadges(): Promise<EmojiCode[]> {
+        const emojiList = await db.Badge.findAll({
+            offset: 50,
+            limit: 25
+        });
+
+        const emojiCode: EmojiCode[] = emojiList.map(emoji => {
+            return { label: emoji.emoji, value: emoji.value, emoji: emoji.value };
+        });
+
+        return emojiCode;
+    }
 }
 export const getBadgesForChoices = new GetBadgesForChoices();

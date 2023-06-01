@@ -16,7 +16,7 @@ class AchievementManager {
         return badge;
     }
 
-    async createAchievement({ emoji, emoji_value, type, level_to_reach, plays_to_reach, wins_to_reach, description, name}: AchievementsAttributes) {
+    async createAchievement({ emoji, emoji_value, type, level_to_reach, plays_to_reach, wins_to_reach, money_to_reach, description, name}: AchievementsAttributes) {
         const achievement = await db.Achievement.create({
             emoji: emoji,
             emoji_value: emoji_value,
@@ -24,6 +24,7 @@ class AchievementManager {
             level_to_reach: level_to_reach,
             plays_to_reach: plays_to_reach,
             wins_to_reach: wins_to_reach,
+            money_to_reach: money_to_reach,
             description: description,
             name: name
         });
@@ -45,6 +46,19 @@ class AchievementManager {
     async getSecondTwentyFiveAchievements(): Promise<EmojiCode[]> {
         const achievements = await db.Achievement.findAll({
             offset: 25,
+            limit: 25
+        });
+
+        const emojiCode: EmojiCode[] = achievements.map(achievement => {
+            return { emoji: achievement.emoji_value, label: achievement.name, value: String(achievement.id) };
+        });
+
+        return emojiCode;
+    }
+
+    async getThirdTwentyFiveAchievements(): Promise<EmojiCode[]> {
+        const achievements = await db.Achievement.findAll({
+            offset: 50,
             limit: 25
         });
 

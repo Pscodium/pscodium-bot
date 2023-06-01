@@ -1,8 +1,7 @@
 import { ApplicationCommandOptionType, ApplicationCommandType } from "discord.js";
-import { db, sequelize } from "../../data-source";
+import { db } from "../../data-source";
 import { Command } from "../../structs/types/Command";
-
-
+import { userBankManager } from "../../utils/UserBankManager";
 
 export default new Command({
     name: "give-money",
@@ -56,19 +55,11 @@ export default new Command({
             ]
         });
 
-        function formatedCash(amount: number) {
-            let formated = amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-            if(Number(formated) >= 100) {
-                formated = formated.replace(',', '.');
-            }
-            return formated;
-        }
-
         if (!user) return;
 
         await db.Bank.update(
             {
-                bank: sequelize.literal(`bank + ${amount}`)
+                bank: db.sequelize.literal(`bank + ${amount}`)
             },
             {
                 where: {
@@ -77,7 +68,7 @@ export default new Command({
             });
 
         interaction.reply({
-            content: `${member} enviou para ${mention? mention : member} ${formatedCash(amount)} créditos!!`,
+            content: `${member} enviou para ${mention? mention : member} ${userBankManager.formatedCash(amount)} créditos!!`,
             ephemeral: visibility == undefined? false : visibility
         });
     },

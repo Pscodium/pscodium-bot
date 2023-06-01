@@ -3,8 +3,9 @@
 /* eslint-disable indent */
 import { ActionRowBuilder, ApplicationCommandOptionType, ApplicationCommandType, ButtonBuilder, ButtonInteraction, ButtonStyle, CacheType, ColorResolvable, CommandInteraction, ComponentType, EmbedBuilder } from "discord.js";
 import { config } from "../..";
-import { db, sequelize } from "../../data-source";
+import { db } from "../../data-source";
 import { Command } from "../../structs/types/Command";
+import { userBankManager } from "../../utils/UserBankManager";
 import { userGameInteraction } from "../../utils/UserGameInteraction";
 
 interface PlayProps {
@@ -75,7 +76,7 @@ export default new Command({
             }
         });
         if (!storedUser) return;
-        const wallet = parseFloat(String(storedUser.bank.balance));
+        const wallet = storedUser.bank.balance;
 
         if (bet && wallet < bet || bet == 0) {
             interaction.reply({ content: "Você tem que ter dinheiro na carteira para jogar." });
@@ -133,15 +134,6 @@ export default new Command({
 
         function removeLetters(str: string) {
             return Number(str.replace(/[^\d]/g, ''));
-        }
-
-        function formatedCash(amount: number | undefined) {
-            if (!amount) return;
-            let formated = amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-            if (Number(formated) >= 100) {
-                formated = formated.replace(',', '.');
-            }
-            return formated;
         }
 
         let countHits = 0;
@@ -284,11 +276,7 @@ export default new Command({
             }
 
             if (userWin) {
-                await db.Bank.update({
-                    balance: bet ? wallet + bet : wallet * 2
-                }, {
-                    where: { id: storedUser?.bankId }
-                });
+                await userBankManager.blackjackUpdateBalanceWinner(bet, storedUser?.bankId);
                 await db.Blackjack.destroy({
                     where: {
                         userId: member.id
@@ -310,8 +298,8 @@ export default new Command({
                         **Dealer | ${dealerTotalSum}**
                         ${firstDealerCard?.value} ${secondDealerCard ? secondDealerCard.value : ''} ${thirdDealerCard ? thirdDealerCard.value : ''} ${fourthDealerCard ? fourthDealerCard.value : ''} ${fifthDealerCard ? fifthDealerCard.value : ''}
 
-                        Your profit: ${bet ? formatedCash(bet) : formatedCash(wallet)}
-                        Current balance: ${bet ? formatedCash(wallet + bet) : formatedCash(wallet * 2)}
+                        Your profit: ${bet ? userBankManager.formatedCash(bet) : userBankManager.formatedCash(wallet)}
+                        Current balance: ${bet ? userBankManager.formatedCash(wallet + bet) : userBankManager.formatedCash(wallet * 2)}
 
                         **WINNER**
                         `
@@ -320,13 +308,7 @@ export default new Command({
                 });
                 return;
             }
-
-            await db.Bank.update({
-                balance: bet ? wallet - bet : 0
-            }, {
-                where: { id: storedUser?.bankId }
-            });
-
+            await userBankManager.blackjackUpdateBalanceLoser(bet, storedUser?.bankId);
             await db.Blackjack.destroy({
                 where: {
                     userId: member.id
@@ -348,8 +330,8 @@ export default new Command({
                     **Dealer | ${dealerTotalSum}**
                     ${firstDealerCard?.value} ${secondDealerCard ? secondDealerCard.value : ''} ${thirdDealerCard ? thirdDealerCard.value : ''} ${fourthDealerCard ? fourthDealerCard.value : ''} ${fifthDealerCard ? fifthDealerCard.value : ''}
 
-                    You loss: ${bet ? formatedCash(bet) : formatedCash(wallet)}
-                    Current balance: ${bet ? formatedCash(wallet - bet) : formatedCash(0)}
+                    You loss: ${bet ? userBankManager.formatedCash(bet) : userBankManager.formatedCash(wallet)}
+                    Current balance: ${bet ? userBankManager.formatedCash(wallet - bet) : userBankManager.formatedCash(0)}
 
                     **LOSE**
                     `
@@ -398,7 +380,7 @@ export default new Command({
             **Dealer | ${removeLetters(firstDealerCard.emoji)}**
             ${firstDealerCard.value}
 
-            ${storedPlay? "**Bet:** "+ formatedCash(parseFloat(String(storedPlay.bet))) : ''}
+            ${storedPlay? "**Bet:** "+ userBankManager.formatedCash(storedPlay.bet) : ''}
             `
         });
         const msg = await interaction.reply({ content: storedPlay? `Continue sua jogada anterior...` : "" , embeds: [embed], components: [row], fetchReply: true });

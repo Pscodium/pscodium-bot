@@ -1,7 +1,8 @@
 import { ApplicationCommandOptionType, ApplicationCommandType, ColorResolvable, EmbedBuilder } from "discord.js";
 import { config } from "../..";
-import { db, sequelize } from "../../data-source";
+import { db } from "../../data-source";
 import { Command } from "../../structs/types/Command";
+import { userBankManager } from "../../utils/UserBankManager";
 import { userGameInteraction } from "../../utils/UserGameInteraction";
 
 export default new Command({
@@ -34,7 +35,7 @@ export default new Command({
 
         if (!bank) return;
 
-        const wallet = parseFloat(String(bank.balance));
+        const wallet = bank.balance;
 
         const value = options.getNumber('multiplicador');
         const aposta = options.getNumber('aposta');
@@ -94,23 +95,8 @@ export default new Command({
             multi = parseFloat((multi + randomFloat).toFixed(2));
         }
 
-        function formatedCash(amount: number | string) {
-            if (typeof amount != 'number') {
-                amount = Number(amount);
-            }
-            let formated = amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-            if(Number(formated) >= 100) {
-                formated = formated.replace(',', '.');
-            }
-            return formated;
-        }
-
         if (Number(value) <= multi) {
-            await db.Bank.update({
-                balance: aposta? wallet + ((aposta * Number(value)) - aposta) : wallet * Number(value)
-            }, {
-                where: { id: bankId }
-            });
+            await userBankManager.crashUpdateBalanceWinner(aposta, bankId, Number(value));
             await userGameInteraction.crashWin(member.gameId);
 
             const embed = new EmbedBuilder({
@@ -118,14 +104,14 @@ export default new Command({
                 description: `Parabéns ${interaction.user}, você ganhou!!
 
                 **Sua aposta**
-                - Valor: ${aposta? formatedCash(aposta): formatedCash(wallet)}
+                - Valor: ${aposta? userBankManager.formatedCash(aposta): userBankManager.formatedCash(wallet)}
                 - Multiplicador: ${Number(value).toFixed(2)}
 
                 **Crashou em**
                 - Multiplicador: ${multi}
 
                 **Lucro**
-                - Valor: ${aposta? formatedCash(Number((aposta * Number(value)) - aposta).toFixed(2)) : formatedCash(Number((wallet * Number(value)) - wallet).toFixed(2))}
+                - Valor: ${aposta? userBankManager.formatedCash(Number((aposta * Number(value)) - aposta).toFixed(2)) : userBankManager.formatedCash(Number((wallet * Number(value)) - wallet).toFixed(2))}
 
                 `,
                 author: {
@@ -136,11 +122,7 @@ export default new Command({
 
             interaction.reply({ embeds: [embed] });
         } else {
-            await db.Bank.update({
-                balance: aposta? wallet - aposta : 0
-            }, {
-                where: { id: bankId }
-            });
+            await userBankManager.crashUpdateBalanceLoser(aposta, bankId);
             await userGameInteraction.crashLoss(member.gameId);
 
             const embed = new EmbedBuilder({
@@ -148,14 +130,14 @@ export default new Command({
                 description: `Não foi dessa vez ${interaction.user}, você perdeu!!
 
                 **Sua aposta**
-                - Valor: ${aposta? formatedCash(aposta): formatedCash(wallet)}
+                - Valor: ${aposta? userBankManager.formatedCash(aposta): userBankManager.formatedCash(wallet)}
                 - Multiplicador: ${Number(value).toFixed(2)}
 
                 **Crashou em**
                 - Multiplicador: ${multi}
 
                 **Perda**
-                - Valor: ${aposta? `Você perdeu ${formatedCash(aposta)}`: "Você perdeu todo seu dinheiro da carteira!"}
+                - Valor: ${aposta? `Você perdeu ${userBankManager.formatedCash(aposta)}`: "Você perdeu todo seu dinheiro da carteira!"}
 
                 `,
                 author: {

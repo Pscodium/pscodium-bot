@@ -4,6 +4,7 @@ export enum AchievementTypes {
     LEVEL = 'level',
     WINS = 'wins',
     PLAYS = 'plays',
+    MONEY = 'money',
     MISSION = 'mission'
 }
 
@@ -15,8 +16,10 @@ export interface AchievementsAttributes {
     level_to_reach: number | null;
     plays_to_reach: number| null;
     wins_to_reach: number| null;
+    money_to_reach: number| null;
     description: string;
     name: string;
+    userId?: string;
 }
 
 export interface AchievementsInstance extends Model<AchievementsAttributes>, AchievementsAttributes {}
@@ -50,6 +53,10 @@ export default function Achievements(sequelize: Sequelize) {
         plays_to_reach: {
             type: DataTypes.INTEGER,
             allowNull: true
+        },
+        money_to_reach: {
+            type: DataTypes.DECIMAL(20, 2),
+            defaultValue: 0
         },
         description: {
             type: DataTypes.STRING,

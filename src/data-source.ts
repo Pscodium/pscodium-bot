@@ -24,7 +24,8 @@ const db = {
     Badge: Badges(sequelize),
     Achievement: Achievements(sequelize),
     UserAchievements: UserAchievements(sequelize),
-    Game: Game(sequelize)
+    Game: Game(sequelize),
+    sequelize: sequelize
 };
 
 db.User.belongsTo(db.Bank, {
