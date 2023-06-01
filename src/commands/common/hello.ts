@@ -1,7 +1,6 @@
 import { ApplicationCommandType } from "discord.js";
 import { Command } from "../../structs/types/Command";
 
-
 export default new Command({
     name: "hello",
     description: "Made for experienced devs.",
@@ -11,7 +10,7 @@ export default new Command({
         await interaction.deferReply({ ephemeral: true });
 
         interaction.editReply({
-            content: "Hello World!"
+            content: "# Hello World!"
         });
 
         setTimeout(() => {

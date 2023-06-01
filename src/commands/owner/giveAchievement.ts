@@ -1,5 +1,5 @@
 /* eslint-disable indent */
-import { ActionRowBuilder, ApplicationCommandOptionType, ApplicationCommandType, ColorResolvable, ComponentType, EmbedBuilder, Message, StringSelectMenuBuilder } from "discord.js";
+import { ActionRowBuilder, ApplicationCommandOptionType, ApplicationCommandType, ColorResolvable, ComponentType, EmbedBuilder, StringSelectMenuBuilder } from "discord.js";
 import { config } from "../..";
 import { Command } from "../../structs/types/Command";
 import { achievementManager } from "../../utils/AchievementManager";
@@ -35,10 +35,6 @@ export default new Command({
 
         const firstList = await achievementManager.getFirstTwentyFiveAchievements();
         const secondList = await achievementManager.getSecondTwentyFiveAchievements();
-        let secondRow;
-        let msg: Message<boolean>;
-
-
 
         const row = new ActionRowBuilder<StringSelectMenuBuilder>({
             components: [
@@ -49,20 +45,17 @@ export default new Command({
                 })
             ]
         });
-        if (secondList.length != 0) {
-            secondRow = new ActionRowBuilder<StringSelectMenuBuilder>({
-                components: [
-                    new StringSelectMenuBuilder({
-                        custom_id: 'second-list',
-                        placeholder: "Select a Icon/Badge",
-                        options: secondList
-                    })
-                ]
-            });
-            msg = await interaction.reply({ content: "Selecione algum ícone dessas listas", components: [row, secondRow], fetchReply: true, ephemeral: true });
-        } else {
-            msg = await interaction.reply({ content: "Selecione algum ícone dessas listas", components: [row], fetchReply: true, ephemeral: true });
-        }
+
+        const secondRow = new ActionRowBuilder<StringSelectMenuBuilder>({
+            components: [
+                new StringSelectMenuBuilder({
+                    custom_id: 'second-list',
+                    placeholder: "Select a Icon/Badge",
+                    options: secondList
+                })
+            ]
+        });
+        const msg = await interaction.reply({ content: "Selecione algum ícone dessas listas", components: [row, secondRow], fetchReply: true, ephemeral: true });
 
         const collector = msg.createMessageComponentCollector({ componentType: ComponentType.StringSelect });
 

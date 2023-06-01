@@ -1,8 +1,7 @@
 import { ApplicationCommandOptionType, ApplicationCommandType } from "discord.js";
 import { db } from "../../data-source";
 import { Command } from "../../structs/types/Command";
-
-
+import { userBankManager } from "../../utils/UserBankManager";
 
 export default new Command({
     name: "bank",
@@ -48,69 +47,44 @@ export default new Command({
         const bank = await db.Bank.findByPk(bankId);
 
         if (!bank) return;
-        const account = parseFloat(String(bank.bank));
-        const wallet = parseFloat(String(bank.balance));
+        const account = bank.bank;
+        const wallet = bank.balance;
 
         const subCommand = options.getSubcommand();
         const value = options.getNumber('value');
 
-        function formatedCash(amount: number) {
-            let formated = amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-            if(Number(formated) >= 100) {
-                formated = formated.replace(',', '.');
-            }
-            return formated;
-        }
-
         if (subCommand == "withdraw") {
-
             if (!value) {
-
                 if (account == 0) {
                     interaction.reply({ content: `Você não possui créditos no banco para retirar`});
                     return;
                 }
 
-                await db.Bank.update({
-                    bank: 0,
-                    balance: wallet + account
-                }, {
-                    where: { id: bankId }
-                });
+                await userBankManager.withdrawMoney(account, bankId);
 
-                interaction.reply({ content: "`"+ formatedCash(account) +"` créditos foram retirados com sucesso."});
+                interaction.reply({ content: "`"+ userBankManager.formatedCash(account) +"` créditos foram retirados com sucesso."});
                 return;
             }
 
             if (value > account) {
-                interaction.reply({ content: `Você não possui ${formatedCash(value)} no banco para retirar`});
+                interaction.reply({ content: `Você não possui ${userBankManager.formatedCash(value)} no banco para retirar`});
                 return;
             }
 
-            await db.Bank.update({
-                bank: account - value,
-                balance: wallet + value
-            }, {
-                where: { id: bankId }
-            });
-            interaction.reply({ content: "`"+ formatedCash(value) +"` créditos foram retirados com sucesso."});
+            await userBankManager.withdrawMoney(value, bankId);
+
+            interaction.reply({ content: "`"+ userBankManager.formatedCash(value) +"` créditos foram retirados com sucesso."});
         }
         else if (subCommand == "deposit") {
             if (!value) {
-
                 if (wallet == 0) {
                     interaction.reply({ content: `Você não possui créditos na carteira para depositar`});
                     return;
                 }
 
-                await db.Bank.update({
-                    bank: account + wallet,
-                    balance: 0
-                }, {
-                    where: { id: bankId }
-                });
+                await userBankManager.depositMoney(wallet, bankId);
 
-                interaction.reply({ content: "`"+ formatedCash(wallet) +"` créditos foram depositados com sucesso."});
+                interaction.reply({ content: "`"+ userBankManager.formatedCash(wallet) +"` créditos foram depositados com sucesso."});
                 return;
             }
 
@@ -119,13 +93,9 @@ export default new Command({
                 return;
             }
 
-            await db.Bank.update({
-                bank: account + value,
-                balance: wallet - value
-            }, {
-                where: { id: bankId }
-            });
-            interaction.reply({ content: "`"+ formatedCash(value) +"` créditos foram depositados com sucesso."});
+            await userBankManager.depositMoney(value, bankId);
+
+            interaction.reply({ content: "`"+ userBankManager.formatedCash(value) +"` créditos foram depositados com sucesso."});
         }
     },
 });

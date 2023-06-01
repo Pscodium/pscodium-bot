@@ -1,10 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable indent */
 import { ApplicationCommandOptionType, ApplicationCommandType, ColorResolvable, EmbedBuilder } from "discord.js";
 import { client, config } from "../..";
 import { Command } from "../../structs/types/Command";
 import moment from "moment";
-import { db } from "../../data-source";
-
 
 export default new Command({
     name: "profile",
@@ -37,27 +36,7 @@ export default new Command({
 
         const roles = member?.roles.cache;
 
-        const user = await db.User.findOne({
-            where: {
-                id: mention? mention.id : interaction.user.id
-            },
-            include: [
-                { model: db.Game },
-                'achievements'
-            ]
-        });
-        if (!user) return;
-
-        const achievements = await user.getAchievements();
-
-        const achievementsLabel = achievements.map(achievement => {
-            return { id: achievement.id, name: achievement.name, description: achievement.description, emoji: achievement.emoji, emoji_value: achievement.emoji_value };
-        });
-
-        const gameProfile = user.game;
-        if (!gameProfile) return;
-
-        const rolesString2 = roles?.map(role => `**${role.name}**`).join(", ") || "Nenhuma";
+        const rolesString2 = roles?.map(role => `**${role}**`).join(", ") || "Nenhuma";
 
         const embed = new EmbedBuilder()
             .setTitle(`Profile of ${mention? mention.username : interaction.user.username}`)
@@ -79,62 +58,7 @@ export default new Command({
 
             **Roles:**
             ${rolesString2}
-
-            **Achievements:**
-            ${achievementsLabel.map(achievement => {
-                return achievement.emoji_value;
-            }). join(', ').replace(/,/g, '')}
-
-            __**Game Profile**__
-
             `)
-            .setFields(
-                {
-                    name: "Blackjack Wins",
-                    value: String(gameProfile.blackjack_wins),
-                    inline: true
-                },
-                {
-                    name: "Blackjack Losses",
-                    value: String(gameProfile.blackjack_losses),
-                    inline: true
-                },
-                {
-                    name: "Ratio",
-                    value: String(gameProfile.blackjack_ratio),
-                    inline: true
-                },
-                {
-                    name: "Crash Wins",
-                    value: String(gameProfile.crash_wins),
-                    inline: true
-                },
-                {
-                    name: "Crash Losses",
-                    value: String(gameProfile.crash_losses),
-                    inline: true
-                },
-                {
-                    name: "Ratio",
-                    value: String(gameProfile.crash_ratio),
-                    inline: true
-                },
-                {
-                    name: "Total Wins",
-                    value: String(gameProfile.total_wins),
-                    inline: true
-                },
-                {
-                    name: "Total Losses",
-                    value: String(gameProfile.total_losses),
-                    inline: true
-                },
-                {
-                    name: "Ratio",
-                    value: String(gameProfile.total_ratio),
-                    inline: true
-                }
-            )
             .setColor(config.colors.blue as ColorResolvable);
 
         interaction.reply({

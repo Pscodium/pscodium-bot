@@ -1,8 +1,8 @@
 import { ApplicationCommandOptionType, ApplicationCommandType, ColorResolvable, EmbedBuilder } from "discord.js";
 import { config } from "../..";
-import { db, sequelize } from "../../data-source";
+import { db } from "../../data-source";
 import { Command } from "../../structs/types/Command";
-
+import { userBankManager } from "../../utils/UserBankManager";
 
 export default new Command({
     name: "rank",
@@ -33,16 +33,6 @@ export default new Command({
 
         const choice = options.getString('type');
 
-        function formatedCash(amount: number | undefined) {
-            if (amount) {
-                let formated = parseFloat(String(amount)).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-                if (Number(formated) >= 100) {
-                    formated = formated.replace(',', '.');
-                }
-                return formated;
-            }
-        }
-
         if (choice == "1") {
             const users = await db.User.findAll({
                 limit: 10,
@@ -50,18 +40,18 @@ export default new Command({
                     {
                         model: db.Bank,
                         attributes: [
-                            [sequelize.literal('bank + balance'), "total"]
+                            [db.sequelize.literal('bank + balance'), "total"]
                         ],
                         as: 'bank'
                     }
                 ],
                 order: [
-                    [sequelize.literal('`bank.total`'), 'DESC'],
+                    [db.sequelize.literal('`bank.total`'), 'DESC'],
                 ]
             });
 
             const rankList = users.map((user) => {
-                return { total: formatedCash(user.bank.dataValues.total), userTag: user.userTag };
+                return { total: userBankManager.formatedCash(user.bank.dataValues.total), userTag: user.userTag };
             });
 
             const embed = new EmbedBuilder({
@@ -113,7 +103,7 @@ export default new Command({
                     }
                 ],
                 order: [
-                    [sequelize.literal('`game.total_ratio`'), 'DESC'],
+                    [db.sequelize.literal('`game.total_ratio`'), 'DESC'],
                 ]
             });
 

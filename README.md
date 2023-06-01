@@ -1,4 +1,4 @@
-# Pscodium Bot v1.16
+# Pscodium Bot v1.1.7
 
 ## Dependencies
 
@@ -38,55 +38,58 @@ DB_NAME=database
 
 #### After start this project do you need to set somethings.
 
-- To populate the **Cards** table for blackjack plays, you need to run `/cards-loader` in root server of this bot.
-
-- Enter in the server where is located the achievements badges (Emojis from another discord server).
-- Use `/badges-loader` to get this badges and insert this information in **Bagdes** table.
-- Create at least one achievement using `/achievement` and some additional information to create a achievement.
-- After create some achievement you can use `/give-achievement` command to send achievement for another user.
+- After turn on bot you need to populate some database tables.
+  - Achievements
+  - Badges
+  - Cards
+- To populate this tables you need to type this command `/populate`.
+- If you have some changes in any of these tables and you want to save this changes, you need to make this locally, using the `/json-saver` on development environment.
+- Json files will fill your database when you need to populate tables that need commands for creating items.
 
 ## Versions
 
-- v0.16 - Added Achievements system to rewards players.
+- v1.1.7 - New Achievements for rewards players when they reached account bank balance.
 
-- v0.15 - Added `/blackjack` and `/emoji` command tests.
+- v1.1.6 - Added Achievements system to rewards players.
 
-- v0.14 - Command `/give-money` now it has a boolean field to change a reply message visibility.
+- v1.1.5 - Added `/blackjack` and `/emoji` command tests.
 
-- v0.13 - Added the `/profile` command.
+- v1.1.4 - Command `/give-money` now it has a boolean field to change a reply message visibility.
 
-- v0.12 - Added the `/ranks` command to list the top 10 users with the highest total balance and for admin users added `/alert` command to send a messa in DM of the mentioned user. 
+- v1.1.3 - Added the `/profile` command.
 
-- v0.11 - Added the `/avatar` command to get user picture and reply in the chat with this image.
+- v1.1.2 - Added the `/ranks` command to list the top 10 users with the highest total balance and for admin users added `/alert` command to send a messa in DM of the mentioned user. 
 
-- v0.10 - Added the `/give-money` command to give money from mentioned user. (only for this bot contributors).
+- v1.1.1 - Added the `/avatar` command to get user picture and reply in the chat with this image.
 
-- v0.09 - Added 4 new commands `/balance`, `/bank <subcommand>`, `/crash` and `/announcement` in this bot.
+- v1.1.0 - Added the `/give-money` command to give money from mentioned user. (only for this bot contributors).
+
+- v1.0.9 - Added 4 new commands `/balance`, `/bank <subcommand>`, `/crash` and `/announcement` in this bot.
   - Balance - Get user bank information or mentioned user.
   - Bank - Withdraw or deposit transactions to money interaction.
   - Crash - Lucky game added.
   - Announcement - Command to admin users to do some announcement in the channel interaction.
 
-- v0.08 - Added mysql database connection with sequelize ORM.
+- v1.0.8 - Added mysql database connection with sequelize ORM.
 
-- v0.07 - Added 3 new commands `/count`, `/manage <subcommand>` and `/embed`.
+- v1.0.7 - Added 3 new commands `/count`, `/manage <subcommand>` and `/embed`.
   - Count - Get some server numbers information.
   - Manage - Kick, Punish or Ban users from guild.
   - Embed - Create a test embed only for developers.
 
-- v0.06 - Added 2 new commands `/server <subcommand>` and `/clear`.
+- v1.0.6 - Added 2 new commands `/server <subcommand>` and `/clear`.
   - Server - Added `<icon>` subcommand to change the server icon.
   - Clear - Clear chat messages.
 
-- v0.05 - Added docker-compose to store bot and database in a container and upload it to a server.
+- v1.0.5 - Added docker-compose to store bot and database in a container and upload it to a server.
 
-- v0.04 - Added mention command in right click in the another user.
+- v1.0.4 - Added mention command in right click in the another user.
 
-- v0.03 - Added logs events and ready message.
+- v1.0.3 - Added logs events and ready message.
 
-- v0.02 - Created Design Pattern from this project.
+- v1.0.2 - Created Design Pattern from this project.
 
-- v0.01 - Project creation.
+- v1.0.1 - Project creation.
 
 ## Possible Features
 
@@ -179,12 +182,15 @@ Think about new plans for this discord bot.
 - [x] Games table.
 - [ ] Command cooldown based on timestamp column from database game table.
 - [x] Table Achievements.
+  - [x] Win games.
+  - [x] Reach money on bank account.
+  - [ ] Level reached.
+  - [ ] 
 - [ ] Table game need more columns to complement
   - [ ] Level
   - [ ] Experience
   - [ ] Life
   - [ ] Defense
-  - [ ] Emblems
   - [ ] Attack Power
 
 ### Database security

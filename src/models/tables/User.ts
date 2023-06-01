@@ -15,7 +15,9 @@ interface UsersAttributes {
 
 interface UserIntance extends Model<UsersAttributes>, UsersAttributes {
     getAchievements(): Promise<AchievementsInstance[]>;
+    getAchievement(): Promise<AchievementsInstance>;
     addAchievement(achievement: AchievementsInstance): unknown;
+    removeAchievement(achievement: AchievementsInstance): unknown;
     setGame(game: GamesInstance): unknown;
     setBank(bank: TransactionInstance): unknown;
     bank: TransactionInstance;
