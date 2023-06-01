@@ -66,7 +66,7 @@ class DatabaseStructureCreator {
         }
     }
 
-    async populateAchievements() {
+    async populateCards() {
         try {
             for (const card in cards) {
                 const cardExist = await db.Card.findOne({ where: { emoji: cards[card].emoji }});
@@ -84,7 +84,7 @@ class DatabaseStructureCreator {
         }
     }
 
-    async populateCards() {
+    async populateAchievements() {
         try {
             for (const achievement in achievements) {
                 const achievementExist = await db.Achievement.findOne({ where: { name: achievements[achievement].name }});
