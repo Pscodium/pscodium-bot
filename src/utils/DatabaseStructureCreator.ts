@@ -53,13 +53,12 @@ class DatabaseStructureCreator {
             for (const badge in badges) {
                 const badgeExist = await db.Badge.findOne({ where: { emoji: badges[badge].emoji }});
 
-                if (badgeExist) {
-                    return;
+                if (!badgeExist) {
+                    await db.Badge.create({
+                        emoji: badges[badge].emoji,
+                        value: badges[badge].value,
+                    });
                 }
-                await db.Badge.create({
-                    emoji: badges[badge].emoji,
-                    value: badges[badge].value,
-                });
             }
         } catch (err) {
             console.error(err);
@@ -71,13 +70,12 @@ class DatabaseStructureCreator {
             for (const card in cards) {
                 const cardExist = await db.Card.findOne({ where: { emoji: cards[card].emoji }});
 
-                if (cardExist) {
-                    return;
+                if (!cardExist) {
+                    await db.Card.create({
+                        emoji: cards[card].emoji,
+                        value: cards[card].value,
+                    });
                 }
-                await db.Card.create({
-                    emoji: cards[card].emoji,
-                    value: cards[card].value,
-                });
             }
         } catch (err) {
             console.error(err);
@@ -89,21 +87,19 @@ class DatabaseStructureCreator {
             for (const achievement in achievements) {
                 const achievementExist = await db.Achievement.findOne({ where: { name: achievements[achievement].name }});
 
-                if (achievementExist) {
-                    return;
+                if (!achievementExist) {
+                    await db.Achievement.create({
+                        description: achievements[achievement].description,
+                        emoji: achievements[achievement].emoji,
+                        emoji_value: achievements[achievement].emoji_value,
+                        name: achievements[achievement].name,
+                        type: achievements[achievement].type as AchievementTypes,
+                        level_to_reach: achievements[achievement].level_to_reach,
+                        money_to_reach: Number(achievements[achievement].money_to_reach),
+                        plays_to_reach: achievements[achievement].plays_to_reach,
+                        wins_to_reach: achievements[achievement].wins_to_reach
+                    });
                 }
-
-                await db.Achievement.create({
-                    description: achievements[achievement].description,
-                    emoji: achievements[achievement].emoji,
-                    emoji_value: achievements[achievement].emoji_value,
-                    name: achievements[achievement].name,
-                    type: achievements[achievement].type as AchievementTypes,
-                    level_to_reach: achievements[achievement].level_to_reach,
-                    money_to_reach: Number(achievements[achievement].money_to_reach),
-                    plays_to_reach: achievements[achievement].plays_to_reach,
-                    wins_to_reach: achievements[achievement].wins_to_reach
-                });
             }
         } catch (err) {
             console.error(err);
