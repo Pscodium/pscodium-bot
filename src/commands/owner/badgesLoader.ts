@@ -24,10 +24,18 @@ export default new Command({
 
         guild.emojis.cache.map(async (emoji) => {
             if (emoji.name === null) return;
-            await db.Badge.create({
-                emoji: emoji.name,
-                value: `<:${emoji.name}:${emoji.id}>`
+
+            const badge = await db.Badge.findOne({
+                where: {
+                    emoji: emoji.name
+                }
             });
+            if (!badge) {
+                await db.Badge.create({
+                    emoji: emoji.name,
+                    value: `<:${emoji.name}:${emoji.id}>`
+                });
+            }
         });
 
         interaction.reply({ content: `Foram adicionadas ${guild.emojis.cache.size} badges no banco de dados`, ephemeral: true });

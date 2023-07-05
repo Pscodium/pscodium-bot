@@ -9,6 +9,8 @@ import Cards from "./models/tables/Cards";
 import Badges from "./models/tables/Badges";
 import Achievements from "./models/tables/Achievements";
 import UserAchievements from "./models/tables/UserAchievements";
+import Ticket from "./models/tables/Ticket";
+import UserTicket from "./models/tables/UserTicket";
 dotenv.config();
 
 const sequelize = new Sequelize(String(process.env.DB_NAME), String(process.env.DB_USER), String(process.env.DB_PASSWORD), {
@@ -25,6 +27,8 @@ const db = {
     Achievement: Achievements(sequelize),
     UserAchievements: UserAchievements(sequelize),
     Game: Game(sequelize),
+    Ticket: Ticket(sequelize),
+    UserTicket: UserTicket(sequelize),
     sequelize: sequelize
 };
 
@@ -42,6 +46,24 @@ db.User.belongsTo(db.Game, {
 });
 db.User.belongsToMany(db.Achievement, { through: db.UserAchievements, foreignKey: 'userId'});
 db.Achievement.belongsToMany(db.User, { through: db.UserAchievements, foreignKey: 'achievementId'});
+
+db.User.belongsToMany(db.Ticket, { through: db.UserTicket, foreignKey: "userId" });
+db.Ticket.belongsToMany(db.User, { through: db.UserTicket, foreignKey: "ticketId" });
+
+db.Ticket.belongsTo(db.User, {
+    foreignKey: "createdBy",
+    constraints: true
+});
+
+db.Ticket.belongsTo(db.User, {
+    foreignKey: "claimedBy",
+    constraints: true
+});
+
+db.Ticket.belongsTo(db.User, {
+    foreignKey: "closedBy",
+    constraints: true
+});
 
 sequelize.sync({ alter: true }).then(() => {
     console.log('Todas as tabelas foram sincronizadas.');

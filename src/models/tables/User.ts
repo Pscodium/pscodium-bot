@@ -2,6 +2,7 @@ import { DataTypes, Model, Sequelize } from "sequelize";
 import { AchievementsInstance } from "./Achievements";
 import { TransactionInstance } from "./Bank";
 import { GamesInstance } from "./Games";
+import { TicketInstance } from "./Ticket";
 
 interface UsersAttributes {
     id: string;
@@ -13,7 +14,10 @@ interface UsersAttributes {
     gameId?: number;
 }
 
-interface UserIntance extends Model<UsersAttributes>, UsersAttributes {
+export interface UserInstance extends Model<UsersAttributes>, UsersAttributes {
+    addTicket(ticket: TicketInstance): unknown;
+    getTickets(): Promise<TicketInstance[]>;
+    getTicket(): Promise<TicketInstance>;
     getAchievements(): Promise<AchievementsInstance[]>;
     getAchievement(): Promise<AchievementsInstance>;
     addAchievement(achievement: AchievementsInstance): unknown;
@@ -26,7 +30,7 @@ interface UserIntance extends Model<UsersAttributes>, UsersAttributes {
 }
 
 export default function User(sequelize: Sequelize) {
-    const User = sequelize.define<UserIntance>("user", {
+    const User = sequelize.define<UserInstance>("user", {
         id: {
             type: DataTypes.STRING,
             primaryKey: true

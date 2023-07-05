@@ -1,4 +1,12 @@
 {
+  "important": {
+    "ticketChannelId": "1124042191086559382",
+    "ticketCategoryId": "1124040541261266954",
+    "visitorRoleId": "1124046563715592232",
+    "verifiedRoleId": "1124048172520583258",
+    "verifyChannelId": "1069697006647398511",
+    "debbudyGuildId": "1069697000284631080"
+  },
   "colors": {
     "Bittersweet": "#ee6352",
     "Emerald": "#59cd90",

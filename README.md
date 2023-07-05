@@ -1,4 +1,4 @@
-# Pscodium Bot v1.1.7
+# Pscodium Bot v1.1.8
 
 ## Dependencies
 
@@ -47,6 +47,8 @@ DB_NAME=database
 - Json files will fill your database when you need to populate tables that need commands for creating items.
 
 ## Versions
+
+- v1.1.8 - Ticket System, Autorole and Verify System. 
 
 - v1.1.7 - New Achievements for rewards players when they reached account bank balance.
 
