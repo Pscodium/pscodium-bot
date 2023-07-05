@@ -1,0 +1,47 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable indent */
+import { ActionRowBuilder, ApplicationCommandType, ButtonBuilder, ButtonStyle, ChannelType, ColorResolvable, ComponentType, EmbedBuilder, ModalBuilder, PermissionsBitField, TextChannel, TextInputBuilder, TextInputStyle } from "discord.js";
+import { Command } from "../../structs/types/Command";
+import { config } from "../..";
+
+
+export default new Command({
+    name: "ticket",
+    description: "Envie seu ticket para o suporte.",
+    type: ApplicationCommandType.ChatInput,
+    async run({ interaction, client }) {
+
+        const member = interaction.user;
+
+        if (!(["439915811692609536", "597225862366232582"].includes(member.id))) {
+            interaction.reply({
+                content: "Você não tem permissões para utilizar esse comando",
+                ephemeral: true
+            });
+            return;
+        }
+
+        if (!interaction.channel) return;
+        const ticketChannel = client.channels.cache.find(channel => channel.id == config.important.ticketChannelId);
+        if (interaction.channel.id !== config.important.ticketChannelId) {
+            return interaction.reply({ content: `Você não pode utilizar o comando */ticket* nesse chat. Utilize o chat ${ticketChannel}`});
+        }
+
+        const row = new ActionRowBuilder<ButtonBuilder>({
+            components: [
+                new ButtonBuilder({
+                    label: "Abrir Ticket",
+                    style: ButtonStyle.Primary,
+                    custom_id: "open-ticket-button"
+                })
+            ]
+        });
+
+        const embed = new EmbedBuilder({
+            author: { name: "Pscodium Bot Ticket System" },
+            description: "Clique no botão abaixo, logo em seguida, aparecerá uma caixa de texto onde você pode nos dar mais detalhes sobre a sua dúvida o que facilita muito no atendimento.",
+        }).setColor(config.colors.blue as ColorResolvable);
+
+        await interaction.channel.send({ embeds: [embed], components: [row] });
+    }
+});
