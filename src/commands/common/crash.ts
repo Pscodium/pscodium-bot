@@ -4,6 +4,7 @@ import { db } from "../../data-source";
 import { Command } from "../../structs/types/Command";
 import { userBankManager } from "../../utils/UserBankManager";
 import { userGameInteraction } from "../../utils/UserGameInteraction";
+import { probabilitiesCreator } from "../../utils/ProbabilitiesCreator";
 
 export default new Command({
     name: "crash",
@@ -58,42 +59,7 @@ export default new Command({
             return;
         }
 
-        function randomWithProbabilities(probs: any[]) {
-            const totalProb = probs.reduce((acc: any, prob: any) => acc + prob, 0);
-            const rand = Math.random() * totalProb;
-            let cumulativeProb = 0;
-            for (let i = 0; i < probs.length; i++) {
-                cumulativeProb += probs[i];
-                if (rand < cumulativeProb) {
-                    return i;
-                }
-            }
-        }
-
-        // default probability is [0.1, 0.3, 0.6]
-        // the sum of the 3 numbers must be equal to 1
-        const probabilities = [0.03, 0.1, 0.87];
-
-        const randomInt = randomWithProbabilities(probabilities);
-
-        let multi = 0;
-        let randomFloat: number;
-
-        if (randomInt === 0) {
-            multi = Math.floor(Math.random() * ( 100 - 8 + 1)) + 5;
-            randomFloat = Number((Math.random() * (1 - 0) + 0).toFixed(2));
-            multi = parseFloat((multi + randomFloat).toFixed(2));
-        }
-        else if (randomInt === 1) {
-            multi = Math.floor(Math.random() * ( 6 - 1.54 + 1)) + 1.54;
-            randomFloat = Number((Math.random() * (1 - 0) + 0).toFixed(2));
-            multi = parseFloat((multi + randomFloat).toFixed(2));
-        }
-        else if (randomInt === 2) {
-            multi = Math.floor(Math.random() * ( 1.54 - 1 + 1)) + 1;
-            randomFloat = Number((Math.random() * (1 - 0) + 0).toFixed(2));
-            multi = parseFloat((multi + randomFloat).toFixed(2));
-        }
+        const multi = probabilitiesCreator.getKindaHardProbabilities();
 
         if (Number(value) <= multi) {
             await userBankManager.crashUpdateBalanceWinner(aposta, bankId, Number(value));
