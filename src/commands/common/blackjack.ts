@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable no-case-declarations */
 /* eslint-disable indent */
-import { ActionRowBuilder, ApplicationCommandOptionType, ApplicationCommandType, ButtonBuilder, ButtonInteraction, ButtonStyle, CacheType, ColorResolvable, CommandInteraction, ComponentType, EmbedBuilder } from "discord.js";
+import { ActionRowBuilder, ApplicationCommandOptionType, ApplicationCommandType, ButtonBuilder, ButtonInteraction, ButtonStyle, CacheType, ColorResolvable, ComponentType, EmbedBuilder } from "discord.js";
 import { config } from "../..";
 import { db } from "../../data-source";
 import { Command } from "../../structs/types/Command";
@@ -299,7 +299,7 @@ export default new Command({
                         ${firstDealerCard?.value} ${secondDealerCard ? secondDealerCard.value : ''} ${thirdDealerCard ? thirdDealerCard.value : ''} ${fourthDealerCard ? fourthDealerCard.value : ''} ${fifthDealerCard ? fifthDealerCard.value : ''}
 
                         Your profit: ${bet ? userBankManager.formatedCash(bet) : userBankManager.formatedCash(wallet)}
-                        Current balance: ${bet ? userBankManager.formatedCash(wallet + bet) : userBankManager.formatedCash(wallet * 2)}
+                        Current balance: ${bet ? userBankManager.formatedCash(Number(wallet) + Number(bet)) : userBankManager.formatedCash(wallet * 2)}
 
                         **WINNER**
                         `
@@ -331,7 +331,7 @@ export default new Command({
                     ${firstDealerCard?.value} ${secondDealerCard ? secondDealerCard.value : ''} ${thirdDealerCard ? thirdDealerCard.value : ''} ${fourthDealerCard ? fourthDealerCard.value : ''} ${fifthDealerCard ? fifthDealerCard.value : ''}
 
                     You loss: ${bet ? userBankManager.formatedCash(bet) : userBankManager.formatedCash(wallet)}
-                    Current balance: ${bet ? userBankManager.formatedCash(wallet - bet) : userBankManager.formatedCash(0)}
+                    Current balance: ${bet ? userBankManager.formatedCash(Number(wallet) - Number(bet)) : userBankManager.formatedCash(0)}
 
                     **LOSE**
                     `
