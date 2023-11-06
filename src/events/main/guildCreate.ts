@@ -1,26 +1,18 @@
-import { ApplicationCommandType} from "discord.js";
 import { db } from "../../data-source";
-import { Command } from "../../structs/types/Command";
+import { Event } from "../../structs/types/Event";
 
-
-
-export default new Command({
-    name: "refresh-database",
-    description: "delete chat messages",
-    type: ApplicationCommandType.ChatInput,
-    defaultMemberPermissions: [
-        "Administrator"
-    ],
-    async run({interaction}) {
-        const { guild } = interaction;
-        if (!guild) return;
-
+export default new Event({
+    name: "guildCreate",
+    once: false,
+    async run(guild) {
         const membersCached = guild.members.cache;
+
+        console.log(`O bot foi adicionado no server ${guild.name}`);
 
         membersCached.map(async (member) => {
             const userExists = await db.User.findOne({
                 where: {
-                    id: interaction.user.id
+                    id: member.user.id
                 }
             });
             if (userExists) {
@@ -41,11 +33,6 @@ export default new Command({
             game.save();
         });
 
-
-
-        await interaction.deferReply({ ephemeral: true });
-
-        interaction.editReply({ content: `Foram adicionados ${membersCached.size} usuários no banco de dados`});
-
-    },
+        console.log(`Foram adicionados ${membersCached.size} usuários no banco de dados`);
+    }
 });
