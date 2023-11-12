@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-var-requires */
-import { Sequelize } from "sequelize";
+import { ModelOptions, Sequelize } from "sequelize";
 import dotenv = require('dotenv');
 import User from "./models/tables/User";
 import Bank from "./models/tables/Bank";
@@ -11,6 +12,9 @@ import Achievements from "./models/tables/Achievements";
 import UserAchievements from "./models/tables/UserAchievements";
 import Ticket from "./models/tables/Ticket";
 import UserTicket from "./models/tables/UserTicket";
+import DefaultService from "./services/default.service";
+import enums from './models/enums/index';
+import Permissions from "./models/tables/Permissions";
 dotenv.config();
 
 const sequelize = new Sequelize(String(process.env.DB_NAME), String(process.env.DB_USER), String(process.env.DB_PASSWORD), {
@@ -18,7 +22,18 @@ const sequelize = new Sequelize(String(process.env.DB_NAME), String(process.env.
     dialect: 'mysql',
 });
 
+export interface Options extends ModelOptions<any> {
+    associate?: (models: Record<string, any>) => void;
+}
+
+interface ModelOptionsGeneric {
+    options: {
+        associate?: (models: DatabaseModels) => void;
+    }
+}
+
 const db = {
+    enums,
     User: User(sequelize),
     Bank: Bank(sequelize),
     Card: Cards(sequelize),
@@ -29,40 +44,21 @@ const db = {
     Game: Game(sequelize),
     Ticket: Ticket(sequelize),
     UserTicket: UserTicket(sequelize),
+    Permissions: Permissions(sequelize),
     sequelize: sequelize
 };
 
-db.User.belongsTo(db.Bank, {
-    foreignKey: "bankId",
-    constraints: true
-});
-db.Blackjack.belongsTo(db.User, {
-    foreignKey: "userId",
-    constraints: true
-});
-db.User.belongsTo(db.Game, {
-    foreignKey: "gameId",
-    constraints: true
-});
-db.User.belongsToMany(db.Achievement, { through: db.UserAchievements, foreignKey: 'userId'});
-db.Achievement.belongsToMany(db.User, { through: db.UserAchievements, foreignKey: 'achievementId'});
+type DatabaseModels = typeof db;
+type ModelBase<T> = T extends { [key: string]: infer U } ? U & ModelOptionsGeneric : never;
 
-db.User.belongsToMany(db.Ticket, { through: db.UserTicket, foreignKey: "userId" });
-db.Ticket.belongsToMany(db.User, { through: db.UserTicket, foreignKey: "ticketId" });
+new DefaultService();
 
-db.Ticket.belongsTo(db.User, {
-    foreignKey: "createdBy",
-    constraints: true
-});
-
-db.Ticket.belongsTo(db.User, {
-    foreignKey: "claimedBy",
-    constraints: true
-});
-
-db.Ticket.belongsTo(db.User, {
-    foreignKey: "closedBy",
-    constraints: true
+Object.entries(db).forEach(([modelName, model]) => {
+    if (modelName === 'enums' || modelName === 'sequelize') return;
+    const modelInstance = model as ModelBase<DatabaseModels>;
+    if (modelInstance.options && typeof modelInstance.options.associate === 'function') {
+        modelInstance.options.associate(db);
+    }
 });
 
 sequelize.sync({ alter: true }).then(() => {

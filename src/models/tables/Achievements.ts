@@ -1,4 +1,5 @@
 import { DataTypes, Model, Sequelize } from "sequelize";
+import { Options } from "../../data-source";
 
 export enum AchievementTypes {
     LEVEL = 'level',
@@ -64,6 +65,10 @@ export default function Achievements(sequelize: Sequelize) {
         name: {
             type: DataTypes.STRING,
         }
-    });
+    }, {
+        associate: function (models: Record<string, any>) {
+            models.Achievement.belongsToMany(models.User, { through: models.UserAchievements, foreignKey: 'achievementId'});
+        }
+    } as Options);
     return Achievements;
 }

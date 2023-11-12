@@ -1,6 +1,7 @@
 import { ApplicationCommandOptionType, ApplicationCommandType, ColorResolvable, EmbedBuilder } from "discord.js";
 import { config } from "../..";
 import { Command } from "../../structs/types/Command";
+import { permissionService } from "../../services/permissions.service";
 
 export default new Command({
     name: "emoji",
@@ -45,6 +46,17 @@ export default new Command({
         }
     ],
     async run({interaction, options}) {
+
+        const member = interaction.user;
+
+        const isAdmin = await permissionService.isMasterAdmin(member.id);
+        if (!isAdmin) {
+            interaction.reply({
+                content: "Você não tem permissões para utilizar esse comando",
+                ephemeral: true
+            });
+            return;
+        }
 
         const { guild } = interaction;
 

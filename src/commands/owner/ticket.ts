@@ -3,6 +3,7 @@
 import { ActionRowBuilder, ApplicationCommandType, ButtonBuilder, ButtonStyle, ChannelType, ColorResolvable, ComponentType, EmbedBuilder, ModalBuilder, PermissionsBitField, TextChannel, TextInputBuilder, TextInputStyle } from "discord.js";
 import { Command } from "../../structs/types/Command";
 import { config } from "../..";
+import { permissionService } from "../../services/permissions.service";
 
 
 export default new Command({
@@ -13,7 +14,8 @@ export default new Command({
 
         const member = interaction.user;
 
-        if (!(["439915811692609536", "597225862366232582"].includes(member.id))) {
+        const isOwner = await permissionService.isOwner(member.id);
+        if (!isOwner) {
             interaction.reply({
                 content: "Você não tem permissões para utilizar esse comando",
                 ephemeral: true

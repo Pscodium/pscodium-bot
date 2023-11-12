@@ -1,6 +1,6 @@
 import { ApplicationCommandType } from "discord.js";
 import { Command } from "../../structs/types/Command";
-import { badgesManager } from "../../utils/BadgesManager";
+import { badgesService } from "../../services/badges.service";
 
 
 export default new Command({
@@ -10,7 +10,7 @@ export default new Command({
     async run({ interaction }) {
         const { user } = interaction;
         try {
-            const verified = await badgesManager.getVerifiedBadge(user.id);
+            const verified = await badgesService.getVerifiedBadge(user.id);
 
             if (!verified) {
                 return interaction.reply({ content: "Your account is already verified.", ephemeral: true });

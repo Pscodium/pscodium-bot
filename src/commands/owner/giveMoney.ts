@@ -1,7 +1,8 @@
 import { ApplicationCommandOptionType, ApplicationCommandType } from "discord.js";
 import { db } from "../../data-source";
 import { Command } from "../../structs/types/Command";
-import { userBankManager } from "../../utils/UserBankManager";
+import { genericService } from "../../services/generic.service";
+import { permissionService } from "../../services/permissions.service";
 
 export default new Command({
     name: "give-money",
@@ -38,7 +39,8 @@ export default new Command({
         if (!member) return;
         if (!amount) return;
 
-        if (member.id !== "439915811692609536") {
+        const isOwner = await permissionService.isOwner(member.id);
+        if (!isOwner) {
             interaction.reply({
                 content: "Você não tem permissões para utilizar esse comando",
                 ephemeral: true
@@ -68,7 +70,7 @@ export default new Command({
             });
 
         interaction.reply({
-            content: `${member} enviou para ${mention? mention : member} ${userBankManager.formatedCash(amount)} créditos!!`,
+            content: `${member} enviou para ${mention? mention : member} ${genericService.formatedCash(amount)} créditos!!`,
             ephemeral: visibility == undefined? false : visibility
         });
     },

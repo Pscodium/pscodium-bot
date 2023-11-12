@@ -5,8 +5,8 @@ import { ActionRowBuilder, ApplicationCommandOptionType, ApplicationCommandType,
 import { config } from "../..";
 import { db } from "../../data-source";
 import { Command } from "../../structs/types/Command";
-import { userBankManager } from "../../utils/UserBankManager";
-import { userGameInteraction } from "../../utils/UserGameInteraction";
+import { blackjackService } from "../../services/blackjack.service";
+import { gameService } from "../../services/games.service";
 
 interface PlayProps {
     countHits?: number;
@@ -276,13 +276,13 @@ export default new Command({
             }
 
             if (userWin) {
-                await userBankManager.blackjackUpdateBalanceWinner(bet, storedUser?.bankId);
+                await blackjackService.blackjackUpdateBalanceWinner(bet, storedUser?.bankId);
                 await db.Blackjack.destroy({
                     where: {
                         userId: member.id
                     }
                 });
-                await userGameInteraction.blackjackWin(storedUser?.gameId);
+                await gameService.blackjackWin(storedUser?.gameId);
                 interaction.update({
                     content: '',
                     embeds: [
@@ -298,8 +298,8 @@ export default new Command({
                         **Dealer | ${dealerTotalSum}**
                         ${firstDealerCard?.value} ${secondDealerCard ? secondDealerCard.value : ''} ${thirdDealerCard ? thirdDealerCard.value : ''} ${fourthDealerCard ? fourthDealerCard.value : ''} ${fifthDealerCard ? fifthDealerCard.value : ''}
 
-                        Your profit: ${bet ? userBankManager.formatedCash(bet) : userBankManager.formatedCash(wallet)}
-                        Current balance: ${bet ? userBankManager.formatedCash(Number(wallet) + Number(bet)) : userBankManager.formatedCash(wallet * 2)}
+                        Your profit: ${bet ? blackjackService.formatedCash(bet) : blackjackService.formatedCash(wallet)}
+                        Current balance: ${bet ? blackjackService.formatedCash(Number(wallet) + Number(bet)) : blackjackService.formatedCash(wallet * 2)}
 
                         **WINNER**
                         `
@@ -308,13 +308,13 @@ export default new Command({
                 });
                 return;
             }
-            await userBankManager.blackjackUpdateBalanceLoser(bet, storedUser?.bankId);
+            await blackjackService.blackjackUpdateBalanceLoser(bet, storedUser?.bankId);
             await db.Blackjack.destroy({
                 where: {
                     userId: member.id
                 }
             });
-            await userGameInteraction.blackjackLoss(storedUser?.gameId);
+            await gameService.blackjackLoss(storedUser?.gameId);
             interaction.update({
                 content: '',
                 embeds: [
@@ -330,8 +330,8 @@ export default new Command({
                     **Dealer | ${dealerTotalSum}**
                     ${firstDealerCard?.value} ${secondDealerCard ? secondDealerCard.value : ''} ${thirdDealerCard ? thirdDealerCard.value : ''} ${fourthDealerCard ? fourthDealerCard.value : ''} ${fifthDealerCard ? fifthDealerCard.value : ''}
 
-                    You loss: ${bet ? userBankManager.formatedCash(bet) : userBankManager.formatedCash(wallet)}
-                    Current balance: ${bet ? userBankManager.formatedCash(Number(wallet) - Number(bet)) : userBankManager.formatedCash(0)}
+                    You loss: ${bet ? blackjackService.formatedCash(bet) : blackjackService.formatedCash(wallet)}
+                    Current balance: ${bet ? blackjackService.formatedCash(Number(wallet) - Number(bet)) : blackjackService.formatedCash(0)}
 
                     **LOSE**
                     `
@@ -380,7 +380,7 @@ export default new Command({
             **Dealer | ${removeLetters(firstDealerCard.emoji)}**
             ${firstDealerCard.value}
 
-            ${storedPlay? "**Bet:** "+ userBankManager.formatedCash(storedPlay.bet) : ''}
+            ${storedPlay? "**Bet:** "+ blackjackService.formatedCash(storedPlay.bet) : ''}
             `
         });
         const msg = await interaction.reply({ content: storedPlay? `Continue sua jogada anterior...` : "" , embeds: [embed], components: [row], fetchReply: true });

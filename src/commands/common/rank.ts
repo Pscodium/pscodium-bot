@@ -2,7 +2,7 @@ import { ApplicationCommandOptionType, ApplicationCommandType, ColorResolvable, 
 import { config } from "../..";
 import { db } from "../../data-source";
 import { Command } from "../../structs/types/Command";
-import { userBankManager } from "../../utils/UserBankManager";
+import { gameService } from "../../services/games.service";
 
 export default new Command({
     name: "rank",
@@ -51,7 +51,7 @@ export default new Command({
             });
 
             const rankList = users.map((user) => {
-                return { total: userBankManager.formatedCash(user.bank.dataValues.total), userTag: user.userTag };
+                return { total: gameService.formatedCash(user.bank.dataValues.total), userTag: user.userTag };
             });
 
             const embed = new EmbedBuilder({
