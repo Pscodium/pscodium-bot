@@ -4,7 +4,8 @@ import { ApplicationCommandOptionType, ApplicationCommandType, ColorResolvable, 
 import { config } from "../..";
 import { db } from "../../data-source";
 import { Command } from "../../structs/types/Command";
-import { userBankManager } from "../../utils/UserBankManager";
+import { bankService } from "../../services/bank.service";
+import { achievementService } from "../../services/achievement.service";
 
 export default new Command({
     name: "game",
@@ -41,12 +42,12 @@ export default new Command({
 
         if (!user) return;
 
-        const moneyAchievement = await userBankManager.getMoneyAchievement(user.id);
-        const nextMoneyAchievement = await userBankManager.getNextMoneyAchievement(user.id);
-        const totalBankAccountValue = await userBankManager.getTotalBankValue(user.id);
+        const moneyAchievement = await achievementService.getMoneyAchievement(user.id);
+        const nextMoneyAchievement = await achievementService.getNextMoneyAchievement(user.id);
+        const totalBankAccountValue = await bankService.getTotalMoneyByUserId(user.id);
 
-        const moneyToNextAchievement = userBankManager.formatedCash(nextMoneyAchievement?.money_to_reach);
-        const totalMoneyFormatted = userBankManager.formatedCash(totalBankAccountValue);
+        const moneyToNextAchievement = bankService.formatedCash(nextMoneyAchievement?.money_to_reach);
+        const totalMoneyFormatted = bankService.formatedCash(totalBankAccountValue);
 
         const achievements = await user.getAchievements();
 

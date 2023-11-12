@@ -1,7 +1,7 @@
 import { ActionRowBuilder, ButtonInteraction, CacheType, ChannelType, ColorResolvable, EmbedBuilder, Interaction, ModalBuilder, TextChannel, TextInputBuilder, TextInputStyle } from "discord.js";
 import { config } from "../..";
 import { ticketDatabaseManager } from "./ticketDatabaseManager";
-import convertToSmallCaps from "../textManipulator/convertToSmallCaps";
+import { genericService } from "../../services/generic.service";
 
 
 class ChannelManager {
@@ -9,7 +9,7 @@ class ChannelManager {
     public channel: TextChannel | undefined;
 
     async channelCreator(interaction: Interaction<CacheType>) {
-        const ticketChannelName = `●🎫┇${convertToSmallCaps('ticket-'+ interaction.user.username.toLowerCase())}`;
+        const ticketChannelName = `●🎫┇${genericService.convertToSmallCaps('ticket-'+ interaction.user.username.toLowerCase())}`;
 
         const channel = await interaction.guild?.channels.create({
             name: ticketChannelName,

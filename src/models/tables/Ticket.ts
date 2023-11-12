@@ -1,5 +1,6 @@
 import { DataTypes, Model, Sequelize } from "sequelize";
 import { UserInstance } from "./User";
+import { Options } from "../../data-source";
 
 
 export interface TicketAttributes {
@@ -19,7 +20,7 @@ export interface TicketInstance extends Model<TicketAttributes>, TicketAttribute
 }
 
 export default function Ticket(sequelize: Sequelize) {
-    const ticket = sequelize.define<TicketInstance>("ticket", {
+    const Ticket = sequelize.define<TicketInstance>("ticket", {
         id: {
             type: DataTypes.INTEGER,
             primaryKey: true,
@@ -45,7 +46,26 @@ export default function Ticket(sequelize: Sequelize) {
             type: DataTypes.STRING,
             defaultValue: 0
         }
-    });
+    }, {
+        associate: function (models: Record<string, any>) {
+            Ticket.belongsToMany(models.User, { through: models.UserTicket, foreignKey: "ticketId" });
 
-    return ticket;
+            Ticket.belongsTo(models.User, {
+                foreignKey: "createdBy",
+                constraints: true
+            });
+
+            Ticket.belongsTo(models.User, {
+                foreignKey: "claimedBy",
+                constraints: true
+            });
+
+            Ticket.belongsTo(models.User, {
+                foreignKey: "closedBy",
+                constraints: true
+            });
+        }
+    } as Options);
+
+    return Ticket;
 }

@@ -3,8 +3,9 @@ import { ActionRowBuilder, ApplicationCommandOptionType, ApplicationCommandType,
 import { config } from "../..";
 import { AchievementTypes } from "../../models/tables/Achievements";
 import { Command } from "../../structs/types/Command";
-import { achievementManager } from "../../utils/AchievementManager";
-import { getBadgesForChoices } from "../../utils/GetBadgesForChoices";
+import { achievementService } from "../../services/achievement.service";
+import { badgesService } from "../../services/badges.service";
+import { permissionService } from "../../services/permissions.service";
 
 const choices = Object.keys(AchievementTypes).map(type => ({
     name: type.charAt(0).toLocaleUpperCase() + type.slice(1).toLowerCase(),
@@ -77,7 +78,8 @@ export default new Command({
         if (!member) return;
         if (!guild) return;
 
-        if (member.id !== "439915811692609536") {
+        const isOwner = await permissionService.isOwner(member.id);
+        if (!isOwner) {
             interaction.reply({
                 content: "Você não tem permissões para utilizar esse comando",
                 ephemeral: true
@@ -85,9 +87,9 @@ export default new Command({
             return;
         }
 
-        const firstList = await getBadgesForChoices.getFirstTwentyFiveBadges();
-        const secondList = await getBadgesForChoices.getSecondTwentyFiveBadges();
-        const thirdList = await getBadgesForChoices.getThirdTwentyFiveBadges();
+        const firstList = await badgesService.getFirstTwentyFiveBadges();
+        const secondList = await badgesService.getSecondTwentyFiveBadges();
+        const thirdList = await badgesService.getThirdTwentyFiveBadges();
 
         if (!firstList || !secondList) return;
 
@@ -132,10 +134,10 @@ export default new Command({
 
                     await selectInteraction.update({ content: ":clock10: Carregando seu emoji...", components: [] });
 
-                    const badge = await achievementManager.getBadgeFromDatabase(value);
+                    const badge = await badgesService.getBadgeFromDatabase(value);
                     if (!badge) return;
 
-                    await achievementManager.createAchievement({
+                    await achievementService.createAchievement({
                         emoji: badge.emoji,
                         emoji_value: badge.value,
                         type: type as AchievementTypes,
@@ -177,10 +179,10 @@ export default new Command({
 
                     await selectInteraction.update({ content: ":clock10: Carregando seu emoji...", components: [] });
 
-                    const badge = await achievementManager.getBadgeFromDatabase(value);
+                    const badge = await badgesService.getBadgeFromDatabase(value);
                     if (!badge) return;
 
-                    await achievementManager.createAchievement({
+                    await achievementService.createAchievement({
                         emoji: badge.emoji,
                         emoji_value: badge.value,
                         type: type as AchievementTypes,
@@ -222,10 +224,10 @@ export default new Command({
 
                     await selectInteraction.update({ content: ":clock10: Carregando seu emoji...", components: [] });
 
-                    const badge = await achievementManager.getBadgeFromDatabase(value);
+                    const badge = await badgesService.getBadgeFromDatabase(value);
                     if (!badge) return;
 
-                    await achievementManager.createAchievement({
+                    await achievementService.createAchievement({
                         emoji: badge.emoji,
                         emoji_value: badge.value,
                         type: type as AchievementTypes,

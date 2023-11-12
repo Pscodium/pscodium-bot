@@ -3,6 +3,8 @@ import { AchievementsInstance } from "./Achievements";
 import { TransactionInstance } from "./Bank";
 import { GamesInstance } from "./Games";
 import { TicketInstance } from "./Ticket";
+import { PermissionsInstance } from "./Permissions";
+import { Options } from "../../data-source";
 
 interface UsersAttributes {
     id: string;
@@ -12,6 +14,7 @@ interface UsersAttributes {
     userTag: string;
     bankId?: number;
     gameId?: number;
+    permissionId?: number;
 }
 
 export interface UserInstance extends Model<UsersAttributes>, UsersAttributes {
@@ -23,6 +26,7 @@ export interface UserInstance extends Model<UsersAttributes>, UsersAttributes {
     addAchievement(achievement: AchievementsInstance): unknown;
     removeAchievement(achievement: AchievementsInstance): unknown;
     setGame(game: GamesInstance): unknown;
+    setPermission(permission: PermissionsInstance): unknown;
     setBank(bank: TransactionInstance): unknown;
     bank: TransactionInstance;
     game: GamesInstance;
@@ -48,7 +52,21 @@ export default function User(sequelize: Sequelize) {
         userTag: {
             type: DataTypes.STRING,
         }
-    });
+    }, {
+        associate: function (models: Record<string, any>) {
+            User.belongsTo(models.Bank, {
+                foreignKey: "bankId",
+                constraints: true
+            });
+            User.belongsTo(models.Game, {
+                foreignKey: "gameId",
+                constraints: true
+            });
+            User.belongsToMany(models.Achievement, { through: models.UserAchievements, foreignKey: 'userId'});
+            User.belongsToMany(models.Ticket, { through: models.UserTicket, foreignKey: "userId" });
+            User.belongsTo(models.Permissions, { foreignKey: "permissionId", constraints: true });
+        }
+    } as Options);
 
     return User;
 }

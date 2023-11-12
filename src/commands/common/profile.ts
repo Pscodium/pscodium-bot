@@ -4,8 +4,8 @@ import { ApplicationCommandOptionType, ApplicationCommandType, ColorResolvable, 
 import { client, config } from "../..";
 import { Command } from "../../structs/types/Command";
 import moment from "moment";
-import { badgesManager } from "../../utils/BadgesManager";
-import { textManipulator } from "../../utils/textManipulator/TextManipulators";
+import { genericService } from "../../services/generic.service";
+import { badgesService } from "../../services/badges.service";
 
 export default new Command({
     name: "profile",
@@ -41,7 +41,7 @@ export default new Command({
         const rolesString2 = roles?.map(role => `**${role}**`).join(", ") || "Nenhuma";
 
         const embed = new EmbedBuilder()
-            .setTitle(`${await textManipulator.capitalizedCase(mention? mention.username : interaction.user.username)}  ${await badgesManager.userVerifiedBadge(mention? mention.id : interaction.user.id)}`)
+            .setTitle(`${await genericService.capitalizedCase(mention? mention.username : interaction.user.username)}  ${await badgesService.userVerifiedBadge(mention? mention.id : interaction.user.id)}`)
             .setAuthor({
                 name: "Your profile",
 
@@ -50,7 +50,7 @@ export default new Command({
             .setThumbnail(mention? mention.avatarURL() : interaction.user.avatarURL())
             .setDescription(`
             **Nickname:**
-            ${await textManipulator.capitalizedCase(nickname)}
+            ${await genericService.capitalizedCase(nickname)}
 
             **Account created ago:**
             ${now.diff(testeDATE, 'days')} dias

@@ -1,7 +1,7 @@
 import { ApplicationCommandOptionType, ApplicationCommandType } from "discord.js";
 import { db } from "../../data-source";
 import { Command } from "../../structs/types/Command";
-import { userBankManager } from "../../utils/UserBankManager";
+import { bankService } from "../../services/bank.service";
 
 export default new Command({
     name: "bank",
@@ -60,20 +60,20 @@ export default new Command({
                     return;
                 }
 
-                await userBankManager.withdrawMoney(account, bankId);
+                await bankService.withdrawMoney(account, bankId);
 
-                interaction.reply({ content: "`"+ userBankManager.formatedCash(account) +"` créditos foram retirados com sucesso."});
+                interaction.reply({ content: "`"+ bankService.formatedCash(account) +"` créditos foram retirados com sucesso."});
                 return;
             }
 
             if (value > account) {
-                interaction.reply({ content: `Você não possui ${userBankManager.formatedCash(value)} no banco para retirar`});
+                interaction.reply({ content: `Você não possui ${bankService.formatedCash(value)} no banco para retirar`});
                 return;
             }
 
-            await userBankManager.withdrawMoney(value, bankId);
+            await bankService.withdrawMoney(value, bankId);
 
-            interaction.reply({ content: "`"+ userBankManager.formatedCash(value) +"` créditos foram retirados com sucesso."});
+            interaction.reply({ content: "`"+ bankService.formatedCash(value) +"` créditos foram retirados com sucesso."});
         }
         else if (subCommand == "deposit") {
             if (!value) {
@@ -82,9 +82,9 @@ export default new Command({
                     return;
                 }
 
-                await userBankManager.depositMoney(wallet, bankId);
+                await bankService.depositMoney(wallet, bankId);
 
-                interaction.reply({ content: "`"+ userBankManager.formatedCash(wallet) +"` créditos foram depositados com sucesso."});
+                interaction.reply({ content: "`"+ bankService.formatedCash(wallet) +"` créditos foram depositados com sucesso."});
                 return;
             }
 
@@ -93,9 +93,9 @@ export default new Command({
                 return;
             }
 
-            await userBankManager.depositMoney(value, bankId);
+            await bankService.depositMoney(value, bankId);
 
-            interaction.reply({ content: "`"+ userBankManager.formatedCash(value) +"` créditos foram depositados com sucesso."});
+            interaction.reply({ content: "`"+ bankService.formatedCash(value) +"` créditos foram depositados com sucesso."});
         }
     },
 });

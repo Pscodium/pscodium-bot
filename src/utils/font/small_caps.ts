@@ -1,4 +1,4 @@
-const smallCapsMap: Record<string, string> = {
+export const smallCapsMap: Record<string, string> = {
     a: "ᴀ",
     b: "ʙ",
     c: "ᴄ",
@@ -26,7 +26,3 @@ const smallCapsMap: Record<string, string> = {
     y: "ʏ",
     z: "ᴢ",
 };
-
-export default function convertToSmallCaps(text: string): string {
-    return text.toLowerCase().split("").map((char) => smallCapsMap[char] || char).join("");
-}

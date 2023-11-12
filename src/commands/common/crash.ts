@@ -2,8 +2,7 @@ import { ApplicationCommandOptionType, ApplicationCommandType, ColorResolvable, 
 import { config } from "../..";
 import { db } from "../../data-source";
 import { Command } from "../../structs/types/Command";
-import { userBankManager } from "../../utils/UserBankManager";
-import { userGameInteraction } from "../../utils/UserGameInteraction";
+import { gameService } from "../../services/games.service";
 
 export default new Command({
     name: "crash",
@@ -96,22 +95,22 @@ export default new Command({
         }
 
         if (Number(value) <= multi) {
-            await userBankManager.crashUpdateBalanceWinner(aposta, bankId, Number(value));
-            await userGameInteraction.crashWin(member.gameId);
+            await gameService.crashUpdateBalanceWinner(aposta, bankId, Number(value));
+            await gameService.crashWin(member.gameId);
 
             const embed = new EmbedBuilder({
                 title: "Você ganhou!!",
                 description: `Parabéns ${interaction.user}, você ganhou!!
 
                 **Sua aposta**
-                - Valor: ${aposta? userBankManager.formatedCash(aposta): userBankManager.formatedCash(wallet)}
+                - Valor: ${aposta? gameService.formatedCash(aposta): gameService.formatedCash(wallet)}
                 - Multiplicador: ${Number(value).toFixed(2)}
 
                 **Crashou em**
                 - Multiplicador: ${multi}
 
                 **Lucro**
-                - Valor: ${aposta? userBankManager.formatedCash(Number((aposta * Number(value)) - aposta).toFixed(2)) : userBankManager.formatedCash(Number((wallet * Number(value)) - wallet).toFixed(2))}
+                - Valor: ${aposta? gameService.formatedCash(Number((aposta * Number(value)) - aposta).toFixed(2)) : gameService.formatedCash(Number((wallet * Number(value)) - wallet).toFixed(2))}
 
                 `,
                 author: {
@@ -122,22 +121,22 @@ export default new Command({
 
             interaction.reply({ embeds: [embed] });
         } else {
-            await userBankManager.crashUpdateBalanceLoser(aposta, bankId);
-            await userGameInteraction.crashLoss(member.gameId);
+            await gameService.crashUpdateBalanceLoser(aposta, bankId);
+            await gameService.crashLoss(member.gameId);
 
             const embed = new EmbedBuilder({
                 title: "Você Perdeu!!",
                 description: `Não foi dessa vez ${interaction.user}, você perdeu!!
 
                 **Sua aposta**
-                - Valor: ${aposta? userBankManager.formatedCash(aposta): userBankManager.formatedCash(wallet)}
+                - Valor: ${aposta? gameService.formatedCash(aposta): gameService.formatedCash(wallet)}
                 - Multiplicador: ${Number(value).toFixed(2)}
 
                 **Crashou em**
                 - Multiplicador: ${multi}
 
                 **Perda**
-                - Valor: ${aposta? `Você perdeu ${userBankManager.formatedCash(aposta)}`: "Você perdeu todo seu dinheiro da carteira!"}
+                - Valor: ${aposta? `Você perdeu ${gameService.formatedCash(aposta)}`: "Você perdeu todo seu dinheiro da carteira!"}
 
                 `,
                 author: {

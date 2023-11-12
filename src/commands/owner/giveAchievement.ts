@@ -2,7 +2,8 @@
 import { ActionRowBuilder, ApplicationCommandOptionType, ApplicationCommandType, ColorResolvable, ComponentType, EmbedBuilder, StringSelectMenuBuilder } from "discord.js";
 import { config } from "../..";
 import { Command } from "../../structs/types/Command";
-import { achievementManager } from "../../utils/AchievementManager";
+import { achievementService } from "../../services/achievement.service";
+import { permissionService } from "../../services/permissions.service";
 
 export default new Command({
     name: "give-achievement",
@@ -25,7 +26,8 @@ export default new Command({
         if (!member) return;
         if (!guild) return;
 
-        if (member.id !== "439915811692609536") {
+        const isOwner = await permissionService.isOwner(member.id);
+        if (!isOwner) {
             interaction.reply({
                 content: "Você não tem permissões para utilizar esse comando",
                 ephemeral: true
@@ -33,8 +35,8 @@ export default new Command({
             return;
         }
 
-        const firstList = await achievementManager.getFirstTwentyFiveAchievements();
-        const secondList = await achievementManager.getSecondTwentyFiveAchievements();
+        const firstList = await achievementService.getFirstTwentyFiveAchievements();
+        const secondList = await achievementService.getSecondTwentyFiveAchievements();
 
         const row = new ActionRowBuilder<StringSelectMenuBuilder>({
             components: [
@@ -67,7 +69,7 @@ export default new Command({
 
                     await selectInteraction.update({ content: ":clock10: Carregando seu emoji...", components: [] });
 
-                    await achievementManager.addAchievementForUser(user? user.id : member.id, value);
+                    await achievementService.addAchievementForUser(user? user.id : member.id, value);
 
                     setTimeout(() => {
                         selectInteraction.followUp({ ephemeral: true, embeds: [
@@ -92,7 +94,7 @@ export default new Command({
 
                     await selectInteraction.update({ content: ":clock10: Carregando seu emoji...", components: [] });
 
-                    await achievementManager.addAchievementForUser(user? user.id : member.id, value);
+                    await achievementService.addAchievementForUser(user? user.id : member.id, value);
 
                     setTimeout(() => {
                         selectInteraction.followUp({ ephemeral: true, embeds: [

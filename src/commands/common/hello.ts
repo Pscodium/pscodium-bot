@@ -8,7 +8,6 @@ export default new Command({
     async run({ interaction }){
 
         await interaction.deferReply({ ephemeral: true });
-
         interaction.editReply({
             content: "# Hello World!"
         });

@@ -1,6 +1,7 @@
 import { ApplicationCommandType } from "discord.js";
 import { db } from "../../data-source";
 import { Command } from "../../structs/types/Command";
+import { permissionService } from "../../services/permissions.service";
 
 export default new Command({
     name: "cards-loader",
@@ -14,7 +15,8 @@ export default new Command({
         if (!member) return;
         if (!guild) return;
 
-        if (member.id !== "439915811692609536") {
+        const isOwner = await permissionService.isOwner(member.id);
+        if (!isOwner) {
             interaction.reply({
                 content: "Você não tem permissões para utilizar esse comando",
                 ephemeral: true

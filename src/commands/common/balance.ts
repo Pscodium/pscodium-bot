@@ -2,7 +2,7 @@ import { ApplicationCommandOptionType, ApplicationCommandType, ColorResolvable, 
 import { config } from "../..";
 import { db } from "../../data-source";
 import { Command } from "../../structs/types/Command";
-import { userBankManager } from "../../utils/UserBankManager";
+import { genericService } from "../../services/generic.service";
 
 
 
@@ -52,11 +52,11 @@ export default new Command({
             .setFields(
                 {
                     name: "Bank",
-                    value: `Value: ${userBankManager.formatedCash(account)}`
+                    value: `Value: ${genericService.formatedCash(account)}`
                 },
                 {
                     name: "Wallet",
-                    value: `Value: ${userBankManager.formatedCash(wallet)}`
+                    value: `Value: ${genericService.formatedCash(wallet)}`
                 }
             )
             .setColor(config.colors.blue as ColorResolvable);

@@ -1,4 +1,5 @@
 import { DataTypes, Model, Sequelize } from "sequelize";
+import { Options } from "../../data-source";
 
 interface EmojiAttributes {
     emoji: string;
@@ -36,7 +37,7 @@ interface BlackjackAttributes {
 export interface BlackjackInstance extends Model<BlackjackAttributes>, BlackjackAttributes {}
 
 export default function Bank(sequelize: Sequelize) {
-    const Bank = sequelize.define<BlackjackInstance>("blackjack", {
+    const Blackjack = sequelize.define<BlackjackInstance>("blackjack", {
         id: {
             type: DataTypes.INTEGER,
             primaryKey: true,
@@ -99,6 +100,13 @@ export default function Bank(sequelize: Sequelize) {
         fifthDealerCard: {
             type: DataTypes.JSON
         },
-    });
-    return Bank;
+    }, {
+        associate: function (models: Record<string, any>) {
+            Blackjack.belongsTo(models.User, {
+                foreignKey: "userId",
+                constraints: true
+            });
+        }
+    } as Options);
+    return Blackjack;
 }
