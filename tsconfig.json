@@ -1,7 +1,6 @@
 {
     "compilerOptions": {
       "lib": ["ESNext"],
-      "rootDir": "src",
       "outDir": "dist",
       "target": "ESNext",
       "module": "CommonJS",
@@ -19,6 +18,5 @@
       "importHelpers": true,
       "experimentalDecorators": true,
     },
-    "include": ["src"],
-    "exclude": ["node_modules", "**/*.spec.ts"]
+    "include": [ "app" ]
 }
