@@ -1,6 +1,5 @@
 import { GuildMember, User } from "discord.js";
 import { UserInstance } from "../models/tables/User";
-import jwt from 'jsonwebtoken';
 import DefaultService from "./default.service";
 import moment from "moment";
 
@@ -59,25 +58,20 @@ class UserService extends DefaultService {
 
         const sessionAlreadyExists = await this.db.Session.findOne({
             where: {
-                userId: user.id
+                userId: user.id,
+                expiration_date: this.db.sequelize.literal('expiration_date > NOW()')
             }
         });
         if (sessionAlreadyExists) {
-            const expiredSession = moment(sessionAlreadyExists.expiration_date).valueOf() < moment().valueOf();
-            if (!expiredSession) {
-                return sessionAlreadyExists.sessionId;
-            }
             await this.db.Session.destroy({
                 where: {
-                    userId: user.id
+                    sessionId: sessionAlreadyExists.sessionId
                 }
             });
         }
 
-        const token = jwt.sign({ id: user.id }, String(process.env.JWT_SECRET_KEY), { expiresIn: '3d' });
         const session = await this.db.Session.create({
             expiration_date: moment().add(3, 'day').valueOf(),
-            jwt: token
         });
         if (!session) return;
         await session.setUser(hasUser);
