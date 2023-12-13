@@ -38,5 +38,5 @@
         ],
         "indent": 2
     },
-    "ignorePatterns": ["src/models"]
+    "ignorePatterns": ["app/models", "models"]
 }

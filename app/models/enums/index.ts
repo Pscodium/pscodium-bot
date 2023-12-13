@@ -16,6 +16,16 @@ const ENUMS = {
         "can_manage_channels": 'can_manage_channels',
         "owner_level": "owner_level"
     } as const,
+    rpg: {
+        classes: {
+            "warior": 'warior',
+            "rogue": 'rogue',
+            "paladin": 'paladin',
+            "priest": 'priest',
+            "mage": 'mage',
+            "warlock": 'warlock'
+        } as const
+    } as const,
     values: function (enumObj: any) {
         return Object.keys(enumObj).map(function (key) {
             return enumObj[key];

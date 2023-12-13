@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { ModelOptions, Sequelize } from "sequelize";
@@ -15,6 +16,8 @@ import UserTicket from "./models/tables/UserTicket";
 import DefaultService from "./services/default.service";
 import enums from './models/enums/index';
 import Permissions from "./models/tables/Permissions";
+import Session from "./models/tables/Session";
+
 dotenv.config();
 
 const sequelize = new Sequelize(String(process.env.DB_NAME), String(process.env.DB_USER), String(process.env.DB_PASSWORD), {
@@ -35,6 +38,7 @@ interface ModelOptionsGeneric {
 const db = {
     enums,
     User: User(sequelize),
+    Session: Session(sequelize),
     Bank: Bank(sequelize),
     Card: Cards(sequelize),
     Blackjack: Blackjack(sequelize),
