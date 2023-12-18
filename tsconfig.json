@@ -1,6 +1,10 @@
 {
     "compilerOptions": {
       "lib": ["ESNext"],
+      "types": [
+        "./@types",
+        "./@types/Express.d.ts"
+      ],
       "outDir": "dist",
       "target": "ESNext",
       "module": "CommonJS",

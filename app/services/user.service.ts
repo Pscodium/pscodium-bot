@@ -33,6 +33,7 @@ class UserService extends DefaultService {
             username: member.user.username,
             discriminator: member.user.discriminator,
             userTag: member.user.tag,
+            since: member.user.createdAt
         });
         await user.setGame(game);
         await user.setBank(bank);

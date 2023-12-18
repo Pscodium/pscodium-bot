@@ -23,6 +23,9 @@ DB_PASSWORD=password
 DB_PORT=port(3306 default)
 DB_NAME=database
 
+
+FRONTEND_ORIGIN='localhost:5000'
+WEBSERVER_PORT=6000
 ```
 
 ## Start
