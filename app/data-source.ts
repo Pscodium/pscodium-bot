@@ -23,6 +23,7 @@ dotenv.config();
 const sequelize = new Sequelize(String(process.env.DB_NAME), String(process.env.DB_USER), String(process.env.DB_PASSWORD), {
     host: process.env.DB_HOST,
     dialect: 'mysql',
+    logging: false
 });
 
 export interface Options extends ModelOptions<any> {
@@ -65,8 +66,8 @@ Object.entries(db).forEach(([modelName, model]) => {
     }
 });
 
-sequelize.sync({ alter: true }).then(() => {
-    console.log('Todas as tabelas foram sincronizadas.');
+sequelize.sync({ alter: true, logging: false }).then(() => {
+    console.log('All tables have been synchronized.');
 });
 
 

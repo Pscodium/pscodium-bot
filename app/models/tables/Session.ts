@@ -2,7 +2,7 @@ import { DataTypes, Model, Sequelize } from "sequelize";
 import { Options } from "../../data-source";
 import { UserInstance } from "./User";
 
-interface SessionAttributes {
+export interface SessionAttributes {
     sessionId?: string;
     expiration_date: number;
     jwt?: string;

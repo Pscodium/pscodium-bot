@@ -5,6 +5,7 @@ import { GamesInstance } from "./Games";
 import { TicketInstance } from "./Ticket";
 import { PermissionsInstance } from "./Permissions";
 import { Options } from "../../data-source";
+import { SessionAttributes } from "./Session";
 
 interface UsersAttributes {
     id: string;
@@ -15,6 +16,7 @@ interface UsersAttributes {
     bankId?: number;
     gameId?: number;
     permissionId?: number;
+    since: Date;
 }
 
 export interface UserInstance extends Model<UsersAttributes>, UsersAttributes {
@@ -31,6 +33,7 @@ export interface UserInstance extends Model<UsersAttributes>, UsersAttributes {
     bank: TransactionInstance;
     game: GamesInstance;
     achievements: AchievementsInstance;
+    permission: PermissionsInstance;
 }
 
 export default function User(sequelize: Sequelize) {
@@ -51,6 +54,10 @@ export default function User(sequelize: Sequelize) {
         },
         userTag: {
             type: DataTypes.STRING,
+        },
+        since: {
+            type: DataTypes.DATE,
+            allowNull: true
         }
     }, {
         associate: function (models: Record<string, any>) {

@@ -36,7 +36,13 @@
             "multi-line",
             "consistent"
         ],
-        "indent": 2
+        "indent": [
+            "error",
+            4,
+            {
+                "SwitchCase": 1
+            }
+        ]
     },
     "ignorePatterns": ["app/models", "models"]
 }
