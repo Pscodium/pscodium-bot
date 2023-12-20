@@ -6,10 +6,16 @@
   "scripts": {
     "dev": "nodemon app/index.ts",
     "build": "tsc",
-    "start": "nodemon app/index.ts",
+    "start": "nodemon --watch app --exec ts-node app/index.ts",
     "eslint": "eslint ./app",
     "eslint_fix": "eslint ./app --fix",
-    "api": "nodemon api/index.ts"
+    "load_database": "ts-node ./app/scripts/load_database.ts",
+    "api": "nodemon --watch api --exec ts-node api/index.ts",
+    "startup": "pm2 start ecosystem.config.js",
+    "restart": "pm2 restart ecosystem.config.js",
+    "finish": "pm2 stop ecosystem.config.js",
+    "list": "pm2 list",
+    "logs": "pm2 logs"
   },
   "repository": {
     "type": "git",
