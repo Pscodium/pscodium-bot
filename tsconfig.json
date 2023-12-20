@@ -1,9 +1,10 @@
 {
     "compilerOptions": {
       "lib": ["ESNext"],
+      "typeRoots": ["api/@types", "./node_modules/@types"],
       "types": [
-        "types",
-        "types/Express.d.ts"
+        "node",
+        "express"
       ],
       "outDir": "dist",
       "target": "ESNext",
@@ -20,7 +21,7 @@
       "declaration": false,
       "resolveJsonModule": true,
       "importHelpers": true,
-      "experimentalDecorators": true,
+      "experimentalDecorators": true
     },
-    "include": ["app", "api", "types"]
+    "include": ["app", "api"]
 }
