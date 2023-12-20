@@ -22,5 +22,5 @@
       "importHelpers": true,
       "experimentalDecorators": true,
     },
-    "include": ["app"]
+    "include": ["app", "api", "types"]
 }
