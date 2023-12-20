@@ -1,4 +1,4 @@
-# Pscodium Bot v1.1.8
+# Pscodium Bot v1.1.9
 
 ## Dependencies
 
@@ -35,7 +35,11 @@ WEBSERVER_PORT=6000
 
 2. `npm install`
 
-3. `make up && make logs` (to view logs)
+3. `npm install pm2 -g`
+
+4. `make up && make logs` (to view database logs)
+
+5. `npm run startup` (to run bot and api)
 
 ## Initialization
 
@@ -50,6 +54,8 @@ WEBSERVER_PORT=6000
 - Json files will fill your database when you need to populate tables that need commands for creating items.
 
 ## Versions
+
+- v1.1.9 - Permissions System, API and `/apiKey` command to use the WebServer API.
 
 - v1.1.8 - Ticket System, Autorole and Verify System. 
 
@@ -104,7 +110,6 @@ WEBSERVER_PORT=6000
 - Inventory system maybe for the another future games.
 - Remove Admin commands or improve commands for real uses.
 - Create welcome and leave messages.
-- Store in user database the users games information (wins, loses, ratio etc)
 
 ## Commands Version
 
@@ -137,8 +142,12 @@ Think about new plans for this discord bot.
 
 ### Future plans
 
-- [ ] Command to add verified emblem to user profile.
-
+- [x] Command to add verified emblem to user profile.
+- [x] API.
+  - [x] Permissions to access this API.
+  - [x] Command to create a session for authenticate API user access.
+  - [ ] Logs system routes. (metric routes).
+  - [ ] Routes for possible dashboard in web interface.
 - [ ] Create more database information to users.
 - [ ] Role change logs.
 - [ ] Autorole.
@@ -184,6 +193,7 @@ Think about new plans for this discord bot.
 
 - [ ] Create more associations for the user table.
 - [ ] Scoreboard games table.
+- [x] Permissions table.
 - [x] Games table.
 - [ ] Command cooldown based on timestamp column from database game table.
 - [x] Table Achievements.

@@ -5,6 +5,7 @@ import express, { Router, Express } from 'express';
 import { routeInitialization } from './routes/config';
 import { logs } from './middleware/logs';
 import { authenticate } from './middleware/authenticate';
+import { db } from '../app/data-source';
 import os from 'os';
 import cors from 'cors';
 import bodyParser from 'body-parser';
@@ -53,3 +54,14 @@ class ApiInitializer {
 }
 
 export const api = new ApiInitializer();
+
+if (db.sequelize) {
+    db.sequelize.authenticate()
+        .then(() => {
+            console.log("WebServer API connected!");
+            new ApiInitializer().start();
+        })
+        .catch((err) => {
+            console.error("Error authenticating database: ", err);
+        });
+}
