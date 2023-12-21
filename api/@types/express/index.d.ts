@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { UserInstance } from '../app/models/tables/User';
+import { UserInstance } from '../../../app/models/tables/User';
 import * as http from 'http';
 
 declare module 'express-serve-static-core' {
