@@ -26,7 +26,7 @@ export default new Command({
             ]
         }
     ],
-    async run({ interaction, options }){
+    async run({ interaction, options, t }){
 
         const mention = options.getUser("user");
 
@@ -59,69 +59,59 @@ export default new Command({
         if (!gameProfile) return;
 
         const embed = new EmbedBuilder()
-            .setTitle(`Game Profile from ${mention? mention.username : interaction.user.username}`)
+            .setTitle(t.translate('GAME_PROFILE_TITLE', { UserName: mention? mention.username : interaction.user.username }))
             .setAuthor({
                 name: interaction.user.username,
 
                 iconURL: interaction.user.avatarURL() || undefined,
             })
             .setThumbnail(mention? mention.avatarURL() : interaction.user.avatarURL())
-            .setDescription(`
-
-            **Achievements:**
-            ${achievementsLabel.map(achievement => {
+            .setDescription(t.translate('GAME_PROFILE_DESCRIPTION', { AchievementsList: achievementsLabel.map(achievement => {
                 return achievement.emoji_value;
-            }). join(', ').replace(/,/g, '')}
-
-            **Total Money:**
-            ${totalMoneyFormatted} / ${moneyToNextAchievement}
-
-            __**Game Stats**__
-
-            `)
+            }). join(', ').replace(/,/g, ''), TotalMoney: totalMoneyFormatted, MoneyAchievement: moneyToNextAchievement }))
             .setFields(
                 {
-                    name: "Blackjack Wins",
+                    name: t.translate('GENERIC_BLACKJACK_WINS'),
                     value: String(gameProfile.blackjack_wins),
                     inline: true
                 },
                 {
-                    name: "Blackjack Losses",
+                    name: t.translate('GENERIC_BLACKJACK_LOSSES'),
                     value: String(gameProfile.blackjack_losses),
                     inline: true
                 },
                 {
-                    name: "Ratio",
+                    name: t.translate('GENERIC_RATIO'),
                     value: String(gameProfile.blackjack_ratio),
                     inline: true
                 },
                 {
-                    name: "Crash Wins",
+                    name: t.translate('GENERIC_CRASH_WINS'),
                     value: String(gameProfile.crash_wins),
                     inline: true
                 },
                 {
-                    name: "Crash Losses",
+                    name: t.translate('GENERIC_CRASH_LOSSES'),
                     value: String(gameProfile.crash_losses),
                     inline: true
                 },
                 {
-                    name: "Ratio",
+                    name: t.translate('GENERIC_RATIO'),
                     value: String(gameProfile.crash_ratio),
                     inline: true
                 },
                 {
-                    name: "Total Wins",
+                    name: t.translate('GENERIC_TOTAL_WINS'),
                     value: String(gameProfile.total_wins),
                     inline: true
                 },
                 {
-                    name: "Total Losses",
+                    name: t.translate('GENERIC_TOTAL_LOSSES'),
                     value: String(gameProfile.total_losses),
                     inline: true
                 },
                 {
-                    name: "Ratio",
+                    name: t.translate('GENERIC_RATIO'),
                     value: String(gameProfile.total_ratio),
                     inline: true
                 }

@@ -18,7 +18,7 @@ export default new Command({
             required: false
         }
     ],
-    async run({interaction, options}) {
+    async run({interaction, options, t}) {
 
         const mention = options.getUser('member');
 
@@ -43,26 +43,33 @@ export default new Command({
         const wallet = userBank.balance;
 
         const embed = new EmbedBuilder()
-            .setTitle("Bank Account")
-            .setDescription(mention? `Geting ${mention} bank account profile`: "Getting your bank account profile")
+            .setTitle(t.translate("BALANCE_TITLE"))
+            .setDescription(t.translate(mention? "BALANCE_MENTIONED_USER_DESCRIPTION" : "BALANCE_SINGLE_USER_DESCRIPTION", { UserName: mention }))
             .setAuthor({
                 name: interaction.user.tag,
                 iconURL: interaction.user.avatarURL() || undefined,
             })
             .setFields(
                 {
-                    name: "Bank",
-                    value: `Value: ${genericService.formatedCash(account)}`
+                    name: t.translate('GENERIC_BANK'),
+                    value: t.translate('BALANCE_FIELD_VALUE', {
+                        FieldValue: genericService.formatedCash(account)
+                    })
                 },
                 {
-                    name: "Wallet",
-                    value: `Value: ${genericService.formatedCash(wallet)}`
+                    name: t.translate('GENERIC_WALLET'),
+                    value: t.translate('BALANCE_FIELD_VALUE', {
+                        FieldValue: genericService.formatedCash(wallet)
+                    })
                 }
             )
             .setColor(config.colors.blue as ColorResolvable);
 
         interaction.reply({
-            embeds: [embed]
+            embeds: [embed],
+            allowedMentions: {
+                parse: ['users']
+            }
         });
     },
 });

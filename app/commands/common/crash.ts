@@ -22,7 +22,7 @@ export default new Command({
             required: false
         }
     ],
-    async run({interaction, options}) {
+    async run({ interaction, options }) {
         const { user } = interaction;
 
         const member = await db.User.findByPk(user.id);

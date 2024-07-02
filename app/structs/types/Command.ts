@@ -1,10 +1,12 @@
 import { ApplicationCommandData, ButtonInteraction, Collection, CommandInteraction, CommandInteractionOptionResolver, ModalSubmitInteraction, StringSelectMenuInteraction } from "discord.js";
 import { ExtendedClient } from "../ExtendedClient";
+import TranslateService from "../../services/translate.service";
 
 interface CommandProps {
     client: ExtendedClient,
     interaction: CommandInteraction,
-    options: CommandInteractionOptionResolver
+    options: CommandInteractionOptionResolver,
+    t: TranslateService
 }
 
 export type ComponentsButton = Collection<string, (interaction: ButtonInteraction) => any>

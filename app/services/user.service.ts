@@ -2,6 +2,7 @@ import { GuildMember, User } from "discord.js";
 import { UserInstance } from "../models/tables/User";
 import DefaultService from "./default.service";
 import moment from "moment";
+import { t } from "./translate.service";
 
 class UserService extends DefaultService {
 
@@ -33,7 +34,8 @@ class UserService extends DefaultService {
             username: member.user.username,
             discriminator: member.user.discriminator,
             userTag: member.user.tag,
-            since: member.user.createdAt
+            since: member.user.createdAt,
+            language: "pt"
         });
         await user.setGame(game);
         await user.setBank(bank);
@@ -79,6 +81,16 @@ class UserService extends DefaultService {
         await session.save();
 
         return session.sessionId;
+    }
+
+    async localizateUser(userId: string) {
+        const user = await this.db.User.findOne({
+            where: { id: userId }
+        });
+        if (!user) return;
+        t.setLocale(user.language);
+
+        return true;
     }
 }
 

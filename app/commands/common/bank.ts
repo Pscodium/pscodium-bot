@@ -33,7 +33,7 @@ export default new Command({
             ]
         }
     ],
-    async run({interaction, options}) {
+    async run({ interaction, options, t}) {
 
         const member = interaction.member;
 
@@ -56,46 +56,46 @@ export default new Command({
         if (subCommand == "withdraw") {
             if (!value) {
                 if (account == 0) {
-                    interaction.reply({ content: `Você não possui créditos no banco para retirar`});
+                    interaction.reply({ content: t.translate('BANK_MESSAGE_WITHOUT_BALANCE')});
                     return;
                 }
 
                 await bankService.withdrawMoney(account, bankId);
 
-                interaction.reply({ content: "`"+ bankService.formatedCash(account) +"` créditos foram retirados com sucesso."});
+                interaction.reply({ content: t.translate('BANK_WITHDRAW_MESSAGE', { Value: bankService.formatedCash(account) }) });
                 return;
             }
 
             if (value > account) {
-                interaction.reply({ content: `Você não possui ${bankService.formatedCash(value)} no banco para retirar`});
+                interaction.reply({ content: t.translate('BANK_INCONDITIONABLE_VALUE_MESSAGE', { Value: bankService.formatedCash(value) }) });
                 return;
             }
 
             await bankService.withdrawMoney(value, bankId);
 
-            interaction.reply({ content: "`"+ bankService.formatedCash(value) +"` créditos foram retirados com sucesso."});
+            interaction.reply({ content: t.translate('BANK_WITHDRAW_MESSAGE', { Value: bankService.formatedCash(value) })});
         }
         else if (subCommand == "deposit") {
             if (!value) {
                 if (wallet == 0) {
-                    interaction.reply({ content: `Você não possui créditos na carteira para depositar`});
+                    interaction.reply({ content: t.translate('BANK_MESSAGE_WITHOUT_WALLET') });
                     return;
                 }
 
                 await bankService.depositMoney(wallet, bankId);
 
-                interaction.reply({ content: "`"+ bankService.formatedCash(wallet) +"` créditos foram depositados com sucesso."});
+                interaction.reply({ content: t.translate('BANK_DEPOSIT_MESSAGE', { Value: bankService.formatedCash(wallet) }) });
                 return;
             }
 
             if (value > wallet) {
-                interaction.reply({ content: `Você não possui créditos na carteira para depositar`});
+                interaction.reply({ content: t.translate('BANK_MESSAGE_WITHOUT_WALLET')});
                 return;
             }
 
             await bankService.depositMoney(value, bankId);
 
-            interaction.reply({ content: "`"+ bankService.formatedCash(value) +"` créditos foram depositados com sucesso."});
+            interaction.reply({ content: t.translate('BANK_DEPOSIT_MESSAGE', { Value: bankService.formatedCash(value) }) });
         }
     },
 });
