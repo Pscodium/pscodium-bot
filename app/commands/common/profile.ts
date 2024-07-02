@@ -19,7 +19,7 @@ export default new Command({
             required: false
         }
     ],
-    async run({interaction, options}) {
+    async run({ interaction, options, t }) {
 
         const mention = options.getUser("user");
 
@@ -43,24 +43,17 @@ export default new Command({
         const embed = new EmbedBuilder()
             .setTitle(`${await genericService.capitalizedCase(mention? mention.username : interaction.user.username)}  ${await badgesService.userVerifiedBadge(mention? mention.id : interaction.user.id)}`)
             .setAuthor({
-                name: "Your profile",
+                name: t.translate('PROFILE_TITLE'),
 
                 iconURL: interaction.user.avatarURL() || undefined,
             })
             .setThumbnail(mention? mention.avatarURL() : interaction.user.avatarURL())
-            .setDescription(`
-            **Nickname:**
-            ${await genericService.capitalizedCase(nickname)}
-
-            **Account created ago:**
-            ${now.diff(testeDATE, 'days')} dias
-
-            **Time on this fucking server:**
-            ${now.diff(joinedAt, 'days')} dias
-
-            **Roles:**
-            ${rolesString2}
-            `)
+            .setDescription(t.translate('PROFILE_DESCRIPTION', {
+                Nickname: await genericService.capitalizedCase(nickname),
+                CreatedAt: now.diff(testeDATE, 'days'),
+                JoinedAt: now.diff(joinedAt, 'days'),
+                RolesList: rolesString2
+            }))
             .setColor(config.colors.blue as ColorResolvable);
 
         interaction.reply({

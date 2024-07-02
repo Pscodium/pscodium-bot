@@ -57,7 +57,7 @@ export default new Command({
             required: false
         }
     ],
-    async run({ interaction, options }) {
+    async run({ interaction, options, t }) {
 
         const member = interaction.user;
         const storedPlay = await db.Blackjack.findOne({
@@ -79,7 +79,7 @@ export default new Command({
         const wallet = storedUser.bank.balance;
 
         if (bet && wallet < bet || bet == 0) {
-            interaction.reply({ content: "Você tem que ter dinheiro na carteira para jogar." });
+            interaction.reply({ content: t.translate('PLAYER_NOT_HAVE_MONEY') });
             return;
         }
 
@@ -196,6 +196,23 @@ export default new Command({
             const userTotalSum = userPlay ? userPlay : 0 + secondUserPlay + thirdUserPlay + fourthUserPlay;
             const dealerTotalSum = dealerPlay ? dealerPlay : 0 + secondDealerPlay + thirdDealerPlay + fourthDealerPlay;
 
+            const draw_translate = {
+                UserTotalSum: userTotalSum,
+                FirstPlayerCard: firstPlayerCard?.value,
+                SecondPlayerCard: secondPlayerCard?.value,
+                ThirdPlayerCard: thirdPlayerCard?.value,
+                FourthPlayerCard: fourthPlayerCard?.value,
+                FifthPlayerCard: fifthPlayerCard?.value,
+                DealerTotalSum: dealerTotalSum,
+                FirstDealerCard: firstDealerCard?.value,
+                SecondDealerCard: secondDealerCard?.value,
+                ThirdDealerCard: thirdDealerCard?.value,
+                FourthDealerCard: fourthDealerCard?.value,
+                FifthDealerCard: fifthDealerCard?.value,
+                Profit: bet ? blackjackService.formatedCash(bet) : blackjackService.formatedCash(wallet),
+                CurrentBalance: bet ? blackjackService.formatedCash(Number(wallet) + Number(bet)) : blackjackService.formatedCash(wallet * 2)
+            };
+
             if (continueInteraction && lastPlay) {
                 const newRow = new ActionRowBuilder<ButtonBuilder>({
                     components: [ stand, doubleDown ]
@@ -210,12 +227,7 @@ export default new Command({
                                 name: interaction.user.tag,
                                 iconURL: interaction.user.avatarURL() || undefined,
                             },
-                            description: `
-                        **You | ${userTotalSum}**
-                        ${firstPlayerCard?.value} ${secondPlayerCard?.value} ${thirdPlayerCard ? thirdPlayerCard.value : ''} ${fourthPlayerCard ? fourthPlayerCard.value : ''} ${fifthPlayerCard ? fifthPlayerCard.value : ''}
-                        **Dealer | ${dealerTotalSum}**
-                        ${firstDealerCard?.value} ${secondDealerCard ? secondDealerCard.value : ''} ${thirdDealerCard ? thirdDealerCard.value : ''} ${fourthDealerCard ? fourthDealerCard.value : ''} ${fifthDealerCard ? fifthDealerCard.value : ''}
-                        `
+                            description: t.translate('BLACKJACK_PLAY_EMBED', draw_translate)
                         })
                     ], components: [newRow]
                 });
@@ -232,12 +244,7 @@ export default new Command({
                                 name: interaction.user.tag,
                                 iconURL: interaction.user.avatarURL() || undefined,
                             },
-                            description: `
-                        **You | ${userTotalSum}**
-                        ${firstPlayerCard?.value} ${secondPlayerCard?.value} ${thirdPlayerCard ? thirdPlayerCard.value : ''} ${fourthPlayerCard ? fourthPlayerCard.value : ''} ${fifthPlayerCard ? fifthPlayerCard.value : ''}
-                        **Dealer | ${dealerTotalSum}**
-                        ${firstDealerCard?.value} ${secondDealerCard ? secondDealerCard.value : ''} ${thirdDealerCard ? thirdDealerCard.value : ''} ${fourthDealerCard ? fourthDealerCard.value : ''} ${fifthDealerCard ? fifthDealerCard.value : ''}
-                        `
+                            description: t.translate('BLACKJACK_PLAY_EMBED', draw_translate)
                         })
                     ], components: [row]
                 });
@@ -259,16 +266,7 @@ export default new Command({
                                 name: interaction.user.tag,
                                 iconURL: interaction.user.avatarURL() || undefined,
                             },
-                            description: `
-                        **You | ${userTotalSum}**
-                        ${firstPlayerCard?.value} ${secondPlayerCard?.value} ${thirdPlayerCard ? thirdPlayerCard.value : ''} ${fourthPlayerCard ? fourthPlayerCard.value : ''} ${fifthPlayerCard ? fifthPlayerCard.value : ''}
-                        **Dealer | ${dealerTotalSum}**
-                        ${firstDealerCard?.value} ${secondDealerCard ? secondDealerCard.value : ''} ${thirdDealerCard ? thirdDealerCard.value : ''} ${fourthDealerCard ? fourthDealerCard.value : ''} ${fifthDealerCard ? fifthDealerCard.value : ''}
-
-                        You had no gains or losses.
-
-                        **DRAW**
-                        `
+                            description: t.translate('BLACKJACK_DRAW_EMBED', draw_translate)
                         }).setColor(config.colors.yellow as ColorResolvable)
                     ], components: []
                 });
@@ -292,17 +290,7 @@ export default new Command({
                                 name: interaction.user.tag,
                                 iconURL: interaction.user.avatarURL() || undefined,
                             },
-                            description: `
-                        **You | ${userTotalSum}**
-                        ${firstPlayerCard?.value} ${secondPlayerCard?.value} ${thirdPlayerCard ? thirdPlayerCard.value : ''} ${fourthPlayerCard ? fourthPlayerCard.value : ''} ${fifthPlayerCard ? fifthPlayerCard.value : ''}
-                        **Dealer | ${dealerTotalSum}**
-                        ${firstDealerCard?.value} ${secondDealerCard ? secondDealerCard.value : ''} ${thirdDealerCard ? thirdDealerCard.value : ''} ${fourthDealerCard ? fourthDealerCard.value : ''} ${fifthDealerCard ? fifthDealerCard.value : ''}
-
-                        Your profit: ${bet ? blackjackService.formatedCash(bet) : blackjackService.formatedCash(wallet)}
-                        Current balance: ${bet ? blackjackService.formatedCash(Number(wallet) + Number(bet)) : blackjackService.formatedCash(wallet * 2)}
-
-                        **WINNER**
-                        `
+                            description: t.translate('BLACKJACK_WINNER_EMBED', draw_translate)
                         }).setColor(config.colors.green as ColorResolvable)
                     ], components: []
                 });
@@ -324,17 +312,7 @@ export default new Command({
                             name: interaction.user.tag,
                             iconURL: interaction.user.avatarURL() || undefined,
                         },
-                        description: `
-                    **You | ${userTotalSum}**
-                    ${firstPlayerCard?.value} ${secondPlayerCard?.value} ${thirdPlayerCard ? thirdPlayerCard.value : ''} ${fourthPlayerCard ? fourthPlayerCard.value : ''} ${fifthPlayerCard ? fifthPlayerCard.value : ''}
-                    **Dealer | ${dealerTotalSum}**
-                    ${firstDealerCard?.value} ${secondDealerCard ? secondDealerCard.value : ''} ${thirdDealerCard ? thirdDealerCard.value : ''} ${fourthDealerCard ? fourthDealerCard.value : ''} ${fifthDealerCard ? fifthDealerCard.value : ''}
-
-                    You loss: ${bet ? blackjackService.formatedCash(bet) : blackjackService.formatedCash(wallet)}
-                    Current balance: ${bet ? blackjackService.formatedCash(Number(wallet) - Number(bet)) : blackjackService.formatedCash(0)}
-
-                    **LOSE**
-                    `
+                        description: t.translate('BLACKJACK_LOSER_EMBED', draw_translate)
                     }).setColor(config.colors.red as ColorResolvable)
                 ], components: []
             });
@@ -374,16 +352,16 @@ export default new Command({
                 name: interaction.user.tag,
                 iconURL: interaction.user.avatarURL() || undefined,
             },
-            description: `
-            **You | ${userPlay}**
-            ${firstUserCard.value} ${secondUserCard.value}
-            **Dealer | ${removeLetters(firstDealerCard.emoji)}**
-            ${firstDealerCard.value}
-
-            ${storedPlay? "**Bet:** "+ blackjackService.formatedCash(storedPlay.bet) : ''}
-            `
+            description: t.translate(storedPlay? "BLACKJACK_BET_PLAY_EMBED":"BLACKJACK_PLAY_EMBED", {
+                UserTotalSum: userPlay,
+                FirstPlayerCard: firstUserCard.value,
+                SecondPlayerCard: secondUserCard.value,
+                DealerTotalSum: removeLetters(firstDealerCard.emoji),
+                FirstDealerCard: firstDealerCard.value,
+                Bet: blackjackService.formatedCash(storedPlay?.bet)
+            })
         });
-        const msg = await interaction.reply({ content: storedPlay? `Continue sua jogada anterior...` : "" , embeds: [embed], components: [row], fetchReply: true });
+        const msg = await interaction.reply({ content: storedPlay? t.translate("BLACKJACK_CONTINUE_PLAY_MESSAGE") : "" , embeds: [embed], components: [row], fetchReply: true });
 
         const collector = msg.createMessageComponentCollector({
             componentType: ComponentType.Button
@@ -395,7 +373,7 @@ export default new Command({
             const buttonInteracionMessageId = buttonInteraction.message.id;
 
             if (lastMessageId !== buttonInteracionMessageId) {
-                buttonInteraction.update({ content: "Por favor, interaja apenas com o comando atual...", embeds: [], components: [] });
+                buttonInteraction.update({ content: t.translate('GENERIC_INVALID_COMMAND_INTERACTION'), embeds: [], components: [] });
                 return;
             }
 

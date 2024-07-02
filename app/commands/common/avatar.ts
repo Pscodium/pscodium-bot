@@ -10,19 +10,19 @@ export default new Command({
     options: [
         {
             name: "user",
-            description: "menciona um truta aí",
+            description: "get avatar from mentioned user",
             type: ApplicationCommandOptionType.User,
             required: false
         }
     ],
-    async run({ interaction, options }){
+    async run({ interaction, options, t }){
 
         const mention = options.getUser('user');
 
         const member = interaction.user;
 
         const embed = new EmbedBuilder()
-            .setTitle(`Foto de ${mention? mention?.username : interaction.user.username}`)
+            .setTitle(t.translate('AVATAR_COMMAND_EMBED_TITLE', { MentionedUser: mention? mention?.username : interaction.user.username }))
             .setAuthor({
                 name: interaction.user.tag,
                 iconURL: interaction.user.avatarURL() || undefined,

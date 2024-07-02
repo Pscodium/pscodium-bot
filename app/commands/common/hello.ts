@@ -5,11 +5,11 @@ export default new Command({
     name: "hello",
     description: "Made for experienced devs.",
     type: ApplicationCommandType.ChatInput,
-    async run({ interaction }){
+    async run({ interaction, t }){
 
         await interaction.deferReply({ ephemeral: true });
         interaction.editReply({
-            content: "# Hello World!"
+            content: `# ${t.translate('HELLO_WORLD_MESSAGE', { UserName: interaction.user })}`
         });
 
         setTimeout(() => {

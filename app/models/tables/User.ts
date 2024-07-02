@@ -5,7 +5,9 @@ import { GamesInstance } from "./Games";
 import { TicketInstance } from "./Ticket";
 import { PermissionsInstance } from "./Permissions";
 import { Options } from "../../data-source";
-import { SessionAttributes } from "./Session";
+import enums from "../enums";
+
+type LanguageEnum = keyof typeof enums.Languages
 
 interface UsersAttributes {
     id: string;
@@ -17,6 +19,7 @@ interface UsersAttributes {
     gameId?: number;
     permissionId?: number;
     since: Date;
+    language: LanguageEnum;
 }
 
 export interface UserInstance extends Model<UsersAttributes>, UsersAttributes {
@@ -58,7 +61,12 @@ export default function User(sequelize: Sequelize) {
         since: {
             type: DataTypes.DATE,
             allowNull: true
-        }
+        },
+        language: {
+            type: DataTypes.ENUM(enums.values(enums.Languages)),
+            defaultValue: enums.Languages.pt,
+            allowNull: true
+        },
     }, {
         associate: function (models: Record<string, any>) {
             User.belongsTo(models.Bank, {

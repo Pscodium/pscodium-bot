@@ -91,7 +91,9 @@ class AchievementService extends DefaultService {
         return achievements;
     }
 
-    async userHasAchievement(userId: string,achievement: AchievementsInstance): Promise<boolean> {
+    async userHasAchievement(userId: string, achievement: AchievementsInstance): Promise<boolean> {
+        if (!achievement) return false;
+
         const hasAchievement = await this.db.UserAchievements.findOne({
             where: {
                 userId: userId,

@@ -1,6 +1,10 @@
 /* eslint-disable no-prototype-builtins */
 /* eslint-disable guard-for-in */
 
+type EnumObject = {
+    [key: string]: string;
+}
+
 const ENUMS = {
     UserRoles: {
         "admin": "admin",
@@ -26,10 +30,16 @@ const ENUMS = {
             "warlock": 'warlock'
         } as const
     } as const,
-    values: function (enumObj: any) {
-        return Object.keys(enumObj).map(function (key) {
-            return enumObj[key];
-        });
+    Languages: {
+        "en": "en",
+        "pt": "pt"
+    },
+    values: function (enumObj: EnumObject) {
+        return {
+            values: Object.keys(enumObj).map(function (key) {
+                return enumObj[key];
+            })
+        }
     },
     keys: (enumObj: any) => {
         return Object.keys(enumObj);
