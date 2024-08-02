@@ -15,7 +15,8 @@
     "restart": "pm2 restart ecosystem.config.js",
     "finish": "pm2 stop ecosystem.config.js",
     "list": "pm2 list",
-    "logs": "pm2 logs"
+    "logs": "pm2 logs",
+    "start:both": "concurrently \"npm start\" \"npm run api\""
   },
   "repository": {
     "type": "git",
@@ -64,6 +65,7 @@
     "@typescript-eslint/eslint-plugin": "^5.59.1",
     "@typescript-eslint/parser": "^5.59.1",
     "chromedriver": "^113.0.0",
+    "concurrently": "^8.2.2",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.4"
   }
