@@ -17,6 +17,7 @@ import DefaultService from "./services/default.service";
 import enums from './models/enums/index';
 import Permissions from "./models/tables/Permissions";
 import Session from "./models/tables/Session";
+import Guilds from "./models/tables/Guilds";
 
 dotenv.config();
 
@@ -39,6 +40,7 @@ interface ModelOptionsGeneric {
 
 const db = {
     enums,
+    Guilds: Guilds(sequelize),
     User: User(sequelize),
     Session: Session(sequelize),
     Bank: Bank(sequelize),
