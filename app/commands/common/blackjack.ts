@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable no-case-declarations */
 /* eslint-disable indent */
-import { ActionRowBuilder, ApplicationCommandOptionType, ApplicationCommandType, ButtonBuilder, ButtonInteraction, ButtonStyle, CacheType, ColorResolvable, ComponentType, EmbedBuilder } from "discord.js";
+import { ActionRowBuilder, APIActionRowComponent, APIMessageActionRowComponent, ApplicationCommandOptionType, ApplicationCommandType, ButtonBuilder, ButtonInteraction, ButtonStyle, CacheType, ColorResolvable, ComponentType, EmbedBuilder } from "discord.js";
 import { config } from "../..";
 import { db } from "../../data-source";
 import { Command } from "../../structs/types/Command";
@@ -83,27 +83,22 @@ export default new Command({
             return;
         }
 
-        const hit = new ButtonBuilder({
-            customId: "hit",
-            label: "hit",
-            style: ButtonStyle.Secondary
-        });
+        const hit = new ButtonBuilder()
+            .setCustomId("hit")
+            .setLabel("hit")
+            .setStyle(ButtonStyle.Secondary);
 
-        const stand = new ButtonBuilder({
-            customId: "stand",
-            label: "stand",
-            style: ButtonStyle.Secondary
-        });
+        const stand = new ButtonBuilder()
+            .setCustomId("stand")
+            .setLabel("stand")
+            .setStyle(ButtonStyle.Secondary);
 
-        const doubleDown = new ButtonBuilder({
-            customId: "double",
-            label: "x2 double down",
-            style: ButtonStyle.Secondary
-        });
+        const doubleDown = new ButtonBuilder()
+            .setCustomId("double")
+            .setLabel("x2 double down")
+            .setStyle(ButtonStyle.Secondary);
 
-        const row = new ActionRowBuilder<ButtonBuilder>({
-            components: [ hit, stand, doubleDown ]
-        });
+        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(hit, stand, doubleDown) as unknown as APIActionRowComponent<APIMessageActionRowComponent>;
 
         const emojiList = await db.Card.findAll();
 
@@ -214,9 +209,7 @@ export default new Command({
             };
 
             if (continueInteraction && lastPlay) {
-                const newRow = new ActionRowBuilder<ButtonBuilder>({
-                    components: [ stand, doubleDown ]
-                });
+                const newRow = new ActionRowBuilder().addComponents(stand, doubleDown) as unknown as APIActionRowComponent<APIMessageActionRowComponent>;
 
                 interaction.update({
                     content: '',

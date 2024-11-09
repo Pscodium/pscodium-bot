@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable indent */
-import { ActionRowBuilder, ApplicationCommandType, ButtonBuilder, ButtonStyle, ChannelType, ColorResolvable, ComponentType, EmbedBuilder, ModalBuilder, PermissionsBitField, TextChannel, TextInputBuilder, TextInputStyle } from "discord.js";
+import { ActionRowBuilder, APIActionRowComponent, APIMessageActionRowComponent, ApplicationCommandType, ButtonBuilder, ButtonStyle, ChannelType, ColorResolvable, ComponentType, EmbedBuilder, ModalBuilder, PermissionsBitField, TextChannel, TextInputBuilder, TextInputStyle } from "discord.js";
 import { Command } from "../../structs/types/Command";
 import { config } from "../..";
 import { permissionService } from "../../services/permissions.service";
@@ -29,15 +29,12 @@ export default new Command({
             return interaction.reply({ content: `Você não pode utilizar o comando */ticket* nesse chat. Utilize o chat ${ticketChannel}`});
         }
 
-        const row = new ActionRowBuilder<ButtonBuilder>({
-            components: [
+        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
                 new ButtonBuilder({
                     label: "Abrir Ticket",
                     style: ButtonStyle.Primary,
                     custom_id: "open-ticket-button"
-                })
-            ]
-        });
+        })) as unknown as APIActionRowComponent<APIMessageActionRowComponent>;
 
         const embed = new EmbedBuilder({
             author: { name: "Pscodium Bot Ticket System" },

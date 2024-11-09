@@ -1,4 +1,4 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ColorResolvable, EmbedBuilder } from "discord.js";
+import { ActionRowBuilder, APIActionRowComponent, APIMessageActionRowComponent, ButtonBuilder, ButtonStyle, ColorResolvable, EmbedBuilder } from "discord.js";
 import { Event } from "../../structs/types/Event";
 import { channelManager } from "../../utils/ticket/ticketChannelManager";
 import { ticketDatabaseManager } from "../../utils/ticket/ticketDatabaseManager";
@@ -25,15 +25,12 @@ export default new Event({
         if (!channel) return;
         await ticketDatabaseManager.createTicket(interaction.user.id, channel.id, question);
 
-        const channelRow = new ActionRowBuilder<ButtonBuilder>({
-            components: [
-                new ButtonBuilder({
-                    label: "Entrar no canal",
-                    style: ButtonStyle.Link,
-                    url: channel?.url
-                })
-            ]
-        });
+        const channelRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder({
+                label: "Entrar no canal",
+                style: ButtonStyle.Link,
+                url: channel?.url
+            })) as unknown as APIActionRowComponent<APIMessageActionRowComponent>;
 
         const channelEmbed = new EmbedBuilder({
             author: { name: "Pscodium Bot Ticket System" },
@@ -42,28 +39,25 @@ export default new Event({
 
         const rep = await interaction.followUp({ embeds: [channelEmbed], components: [channelRow], ephemeral: true });
 
-        const adminRow = new ActionRowBuilder<ButtonBuilder>({
-            components: [
-                new ButtonBuilder({
-                    label: "Fechar",
-                    style: ButtonStyle.Danger,
-                    customId: "ticket-close-button",
-                    emoji: "📪"
-                }),
-                new ButtonBuilder({
-                    label: "Membros",
-                    style: ButtonStyle.Secondary,
-                    customId: "ticket-member-button",
-                    emoji: "➕"
-                }),
-                new ButtonBuilder({
-                    label: "Reinvindicar",
-                    style: ButtonStyle.Primary,
-                    customId: "ticket-claim-button",
-                    emoji: "👋"
-                })
-            ]
-        });
+        const adminRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder({
+                label: "Fechar",
+                style: ButtonStyle.Danger,
+                customId: "ticket-close-button",
+                emoji: "📪"
+            }),
+            new ButtonBuilder({
+                label: "Membros",
+                style: ButtonStyle.Secondary,
+                customId: "ticket-member-button",
+                emoji: "➕"
+            }),
+            new ButtonBuilder({
+                label: "Reinvindicar",
+                style: ButtonStyle.Primary,
+                customId: "ticket-claim-button",
+                emoji: "👋"
+            })) as unknown as APIActionRowComponent<APIMessageActionRowComponent>;
         const adminEmbed = new EmbedBuilder({
             author: { name: "Pscodium Bot Ticket System" },
             title: "Bem-vindo(a), obrigado por abrir um ticket",
