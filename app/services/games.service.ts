@@ -1,6 +1,8 @@
+import { CrashInstance } from "../models/tables/Crash";
 import { achievementService } from "./achievement.service";
 import { bankService } from "./bank.service";
 import DefaultService from "./default.service";
+import { probabilityService } from "./probability.service";
 
 class GameService extends DefaultService {
     async crashUpdateBalanceWinner(bet: number | null, bankId: number | undefined, multiplicator: number) {
@@ -105,6 +107,49 @@ class GameService extends DefaultService {
                 }
             }
         }
+    }
+
+    async getCrashGameMultiplicator(probabilities?: number[]): Promise<number> {
+        const multiplier = await probabilityService.createBatchProbability(probabilities);
+
+        if (!multiplier) {
+            return 1.00;
+        }
+
+        return multiplier;
+    }
+
+    async getActualCrashGame(): Promise<CrashInstance | null> {
+        return await this.db.Crash.findOne({
+            order: [['createdAt', 'desc']],
+            limit: 1
+        });
+    }
+
+    async createNextCrashGame(possibleGames: number[], selectedPlay: number): Promise<CrashInstance> {
+        return await this.db.Crash.create({
+            possibleGames,
+            selectedPlay
+        });
+    }
+
+    async createCrashGame(batchGameResults: number[], matchResult: number): Promise<CrashInstance | null> {
+        try {
+            let actualGame: CrashInstance | null;
+            actualGame = await this.getActualCrashGame();
+            if (!actualGame) {
+                actualGame = await this.createNextCrashGame(batchGameResults, matchResult);
+            }
+            const createdNextGame = await this.createNextCrashGame(batchGameResults, matchResult);
+            if (createdNextGame) {
+                return actualGame;
+            }
+
+        } catch (err) {
+            console.error("[CRASH GAME] - Error on create a crash game: ", err);
+            return null;
+        }
+        return null;
     }
 }
 

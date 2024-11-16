@@ -25,7 +25,7 @@ export default new Event({
             }
 
         } catch (err) {
-            console.log('[ERROR] - Error creating user')
+            console.log('[ERROR] - Error creating user');
         }
     },
 });

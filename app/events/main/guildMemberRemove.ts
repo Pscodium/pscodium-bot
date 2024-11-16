@@ -25,7 +25,7 @@ export default new Event({
                 console.error(`Canal com ID ${channelId} não encontrado.`);
             }
         } catch (err) {
-            console.log('[ERROR] - Error creating user')
+            console.log('[ERROR] - Error creating user');
         }
     }
 });
