@@ -12,7 +12,7 @@ export default new Command({
         {
             name: "multiplicador",
             description: "Digite o quanto você quer apostar",
-            type: ApplicationCommandOptionType.Number,
+            type: ApplicationCommandOptionType.String,
             required: true
         },
         {
@@ -36,9 +36,11 @@ export default new Command({
 
         const wallet = bank.balance;
 
-        const value = options.getNumber('multiplicador');
+        const multiplicador = options.getString('multiplicador');
         const aposta = options.getNumber('aposta');
-        if (!value) return;
+        if (!multiplicador) return;
+
+        const value = parseFloat(multiplicador.replace(',', '.'));
 
         if (wallet === 0) {
             interaction.reply({ content: "Você deve ter dinheiro em sua carteira para jogar, vá no banco sacar `/bank withdraw`."});
