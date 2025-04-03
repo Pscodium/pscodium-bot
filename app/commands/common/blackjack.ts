@@ -7,8 +7,6 @@ import { db } from "../../data-source";
 import { Command } from "../../structs/types/Command";
 import { blackjackService } from "../../services/blackjack.service";
 import { gameService } from "../../services/games.service";
-import { userService } from "../../services/user.service";
-import { cardsService } from "../../services/cards.service";
 
 interface PlayProps {
     countHits?: number;
@@ -62,10 +60,21 @@ export default new Command({
     async run({ interaction, options, t }) {
 
         const member = interaction.user;
-        const storedPlay = await blackjackService.getUserSavedGame(member.id);
+        const storedPlay = await db.Blackjack.findOne({
+            where: {
+                userId: member.id
+            }
+        });
         const bet = storedPlay? Number(storedPlay.bet) : options.getNumber('bet');
 
-        const storedUser = await userService.getUserAndBankAccount(member.id);
+        const storedUser = await db.User.findOne({
+            where: {
+                id: member.id
+            },
+            include: {
+                model: db.Bank
+            }
+        });
         if (!storedUser) return;
         const wallet = storedUser.bank.balance;
 
@@ -91,12 +100,7 @@ export default new Command({
 
         const row = new ActionRowBuilder<ButtonBuilder>().addComponents(hit, stand, doubleDown) as unknown as APIActionRowComponent<APIMessageActionRowComponent>;
 
-        const emojiList = await cardsService.getAllCards();
-
-        if (!emojiList) {
-            console.error('[BLACKJACK ERROR] - Failure to get blackjack cards');
-            return;
-        }
+        const emojiList = await db.Card.findAll();
 
         const emojiCode: EmojiCode[] = emojiList.map(emoji => {
             return { emoji: emoji.emoji, value: emoji.value };

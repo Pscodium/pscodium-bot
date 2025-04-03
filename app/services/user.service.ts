@@ -83,33 +83,6 @@ class UserService extends DefaultService {
         return session.sessionId;
     }
 
-    async getUser(userId: string): Promise<UserInstance | undefined | null> {
-        try {
-            const user = await this.db.User.findByPk(userId);
-            
-            return user;
-        } catch (err) {
-            console.error('[USER ERROR] - ', err);
-        }
-    }
-
-    async getUserAndBankAccount(userId: string): Promise<UserInstance | undefined | null> {
-        try {
-            const user = await this.db.User.findOne({
-                where: {
-                    id: userId
-                },
-                include: [
-                    { model: this.db.Bank }
-                ]
-            });
-            
-            return user;
-        } catch (err) {
-            console.error('[USER ERROR] - ', err);
-        }
-    }
-
     async localizateUser(userId: string) {
         const user = await this.db.User.findOne({
             where: { id: userId }
