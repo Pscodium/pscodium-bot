@@ -18,18 +18,6 @@ class BlackjackService extends DefaultService {
             where: { id: bankId }
         });
     }
-
-    async getUserSavedGame(userId: string) {
-        try {
-            return await this.db.Blackjack.findOne({
-                where: {
-                    userId: userId
-                }
-            });
-        } catch (err) {
-            console.error('[BLACKJACK ERROR] - ', err);
-        }
-    }
 }
 
 export const blackjackService = new BlackjackService();

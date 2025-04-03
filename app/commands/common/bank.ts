@@ -1,7 +1,7 @@
 import { ApplicationCommandOptionType, ApplicationCommandType } from "discord.js";
+import { db } from "../../data-source";
 import { Command } from "../../structs/types/Command";
 import { bankService } from "../../services/bank.service";
-import { userService } from "../../services/user.service";
 
 export default new Command({
     name: "bank",
@@ -39,12 +39,16 @@ export default new Command({
 
         if (!member) return;
 
-        const user = await userService.getUserAndBankAccount(member.user.id);
-        
+        const user = await db.User.findByPk(member.user.id);
         if (!user) return;
 
-        const account = user.bank.bank;
-        const wallet = user.bank.balance;
+        const bankId = user.getDataValue('bankId');
+
+        const bank = await db.Bank.findByPk(bankId);
+
+        if (!bank) return;
+        const account = bank.bank;
+        const wallet = bank.balance;
 
         const subCommand = options.getSubcommand();
         const value = options.getNumber('value');
@@ -56,7 +60,7 @@ export default new Command({
                     return;
                 }
 
-                await bankService.withdrawMoney(account, user.bankId);
+                await bankService.withdrawMoney(account, bankId);
 
                 interaction.reply({ content: t.translate('BANK_WITHDRAW_MESSAGE', { Value: bankService.formatedCash(account) }) });
                 return;
@@ -67,7 +71,7 @@ export default new Command({
                 return;
             }
 
-            await bankService.withdrawMoney(value, user.bankId);
+            await bankService.withdrawMoney(value, bankId);
 
             interaction.reply({ content: t.translate('BANK_WITHDRAW_MESSAGE', { Value: bankService.formatedCash(value) })});
         }
@@ -78,7 +82,7 @@ export default new Command({
                     return;
                 }
 
-                await bankService.depositMoney(wallet, user.bankId);
+                await bankService.depositMoney(wallet, bankId);
 
                 interaction.reply({ content: t.translate('BANK_DEPOSIT_MESSAGE', { Value: bankService.formatedCash(wallet) }) });
                 return;
@@ -89,7 +93,7 @@ export default new Command({
                 return;
             }
 
-            await bankService.depositMoney(value, user.bankId);
+            await bankService.depositMoney(value, bankId);
 
             interaction.reply({ content: t.translate('BANK_DEPOSIT_MESSAGE', { Value: bankService.formatedCash(value) }) });
         }

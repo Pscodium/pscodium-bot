@@ -1,8 +1,8 @@
 import { ApplicationCommandOptionType, ApplicationCommandType, ColorResolvable, EmbedBuilder } from "discord.js";
 import { config } from "../..";
+import { db } from "../../data-source";
 import { Command } from "../../structs/types/Command";
 import { genericService } from "../../services/generic.service";
-import { userService } from "../../services/user.service";
 
 
 
@@ -26,7 +26,14 @@ export default new Command({
 
         if (!member) return;
 
-        const user = await userService.getUserAndBankAccount(mention? mention.id : member.user.id);
+        const user = await db.User.findOne({
+            where: {
+                id: mention? mention.id : member.user.id
+            },
+            include: [
+                { model: db.Bank }
+            ]
+        });
 
         if (!user) return;
 
