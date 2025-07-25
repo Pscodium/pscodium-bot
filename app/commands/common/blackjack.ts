@@ -335,7 +335,7 @@ export default new Command({
         //         `
         //     }).setColor(config.colors.green as ColorResolvable);
 
-        //     return interaction.reply({embeds: [embed]});
+        //     return interaction.reply({embeds: [embed.toJSON()]});
 
         // }
 
@@ -354,7 +354,7 @@ export default new Command({
                 Bet: blackjackService.formatedCash(storedPlay?.bet)
             })
         });
-        const msg = await interaction.reply({ content: storedPlay? t.translate("BLACKJACK_CONTINUE_PLAY_MESSAGE") : "" , embeds: [embed], components: [row], fetchReply: true });
+        const msg = await interaction.reply({ content: storedPlay? t.translate("BLACKJACK_CONTINUE_PLAY_MESSAGE") : "" , embeds: [embed.toJSON()], components: [row], fetchReply: true });
 
         const collector = msg.createMessageComponentCollector({
             componentType: ComponentType.Button

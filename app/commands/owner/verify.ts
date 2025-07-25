@@ -34,7 +34,7 @@ export default new Command({
             description: "Clique na reação abaixo para poder ver todos os canais",
         }).setColor(config.colors.green as ColorResolvable);
 
-        (await interaction.channel.send({ embeds: [embed] })).react('✅');
+        (await interaction.channel.send({ embeds: [embed.toJSON()] })).react('✅');
         await interaction.reply({ content: "Pode excluir esta mensagem, apenas você vai ver ela...", ephemeral: true });
     }
 });

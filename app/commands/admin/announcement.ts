@@ -57,7 +57,7 @@ export default new Command({
 
         interaction.reply({
             content: '@everyone',
-            embeds: [embed]
+            embeds: [embed.toJSON()]
         });
     },
 });

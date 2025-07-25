@@ -89,7 +89,7 @@ export default new Command({
                 }
             }).setColor(config.colors.blue as ColorResolvable);
 
-            interaction.reply({ embeds: [embed] });
+            interaction.reply({ embeds: [embed.toJSON()] });
             return;
         }
         if (choice == "2") {
@@ -146,7 +146,7 @@ export default new Command({
                 }
             }).setColor(config.colors.blue as ColorResolvable);
 
-            interaction.reply({ embeds: [embed] });
+            interaction.reply({ embeds: [embed.toJSON()] });
             return;
         }
     }

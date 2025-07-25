@@ -86,7 +86,7 @@ export default new Command({
                 }
             }).setColor(config.colors.green as ColorResolvable);
 
-            interaction.reply({ embeds: [embed] });
+            interaction.reply({ embeds: [embed.toJSON()] });
         } else {
             await gameService.crashUpdateBalanceLoser(aposta, bankId);
             await gameService.crashLoss(member.gameId);
@@ -112,7 +112,7 @@ export default new Command({
                 },
             }).setColor(config.colors.red as ColorResolvable);
 
-            interaction.reply({ embeds: [embed] });
+            interaction.reply({ embeds: [embed.toJSON()] });
         }
     }
 });

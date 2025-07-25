@@ -57,7 +57,7 @@ export default new Command({
             .setColor(config.colors.blue as ColorResolvable);
 
         interaction.reply({
-            embeds: [embed]
+            embeds: [embed.toJSON()]
         });
     },
 });

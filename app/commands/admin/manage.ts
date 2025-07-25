@@ -150,7 +150,7 @@ export default new Command({
                                 .setTimestamp()
                                 .setThumbnail(member.user.avatarURL());
 
-                            interaction.reply({ embeds: [embed] });
+                            interaction.reply({ embeds: [embed.toJSON()] });
                             await member.kick();
                             return;
                         }
@@ -176,7 +176,7 @@ export default new Command({
                         .setTimestamp()
                         .setThumbnail(member.user.avatarURL());
 
-                        interaction.reply({ embeds: [embed] });
+                        interaction.reply({ embeds: [embed.toJSON()] });
                         await member.kick(reason);
 
                         break;
@@ -207,7 +207,7 @@ export default new Command({
                                 .setTimestamp()
                                 .setThumbnail(member.user.avatarURL());
 
-                            interaction.reply({ embeds: [embed] });
+                            interaction.reply({ embeds: [embed.toJSON()] });
                             await member.ban();
                             return;
                         }
@@ -233,7 +233,7 @@ export default new Command({
                         .setTimestamp()
                         .setThumbnail(member.user.avatarURL());
 
-                        interaction.reply({ embeds: [embed] });
+                        interaction.reply({ embeds: [embed.toJSON()] });
                         await member.ban({ reason: reason });
 
                         break;
@@ -276,7 +276,7 @@ export default new Command({
                                 .setTimestamp()
                                 .setThumbnail(member.user.avatarURL());
 
-                            interaction.reply({ embeds: [embed] });
+                            interaction.reply({ embeds: [embed.toJSON()] });
                             await member.timeout(minutesToMilliseconds(timeout));
                             return;
                         }
@@ -302,7 +302,7 @@ export default new Command({
                         .setTimestamp()
                         .setThumbnail(member.user.avatarURL());
 
-                        interaction.reply({ embeds: [embed] });
+                        interaction.reply({ embeds: [embed.toJSON()] });
                         await member.timeout(minutesToMilliseconds(timeout), reason);
 
                         break;

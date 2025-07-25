@@ -39,7 +39,7 @@ export default new Command({
             .setColor(config.colors.blue as ColorResolvable)
             .setThumbnail(guild.iconURL());
 
-        interaction.reply({ embeds: [embed] });
+        interaction.reply({ embeds: [embed.toJSON()] });
     }
 });
 

@@ -64,9 +64,9 @@ export default new Command({
 
 
         try {
-            mention.send({ embeds: [embed] })
+            mention.send({ embeds: [embed.toJSON()] })
                 .then( () => {
-                    interaction.reply({ content: "O usuário recebeu sua mensagem", ephemeral: true, embeds: [embed] });
+                    interaction.reply({ content: "O usuário recebeu sua mensagem", ephemeral: true, embeds: [embed.toJSON()] });
                 })
                 .catch( () => {
                     interaction.reply({ content: "Não foi possível enviar a mensagem", ephemeral: true });

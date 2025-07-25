@@ -119,7 +119,7 @@ export default new Command({
             .setColor(config.colors["Atomic tangerine"] as ColorResolvable);
 
         interaction.reply({
-            embeds: [embed]
+            embeds: [embed.toJSON()]
         });
     }
 });

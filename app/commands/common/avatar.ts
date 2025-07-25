@@ -33,7 +33,7 @@ export default new Command({
         await interaction.deferReply({ ephemeral: false });
 
         interaction.editReply({
-            embeds: [embed]
+            embeds: [embed.toJSON()]
         });
 
     }

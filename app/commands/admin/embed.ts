@@ -60,7 +60,7 @@ export default new Command({
         await interaction.deferReply({ ephemeral: true });
 
         interaction.editReply({
-            embeds: [embed]
+            embeds: [embed.toJSON()]
         });
 
     }

@@ -41,6 +41,6 @@ export default new Command({
             description: "Clique no botão abaixo, logo em seguida, aparecerá uma caixa de texto onde você pode nos dar mais detalhes sobre a sua dúvida o que facilita muito no atendimento.",
         }).setColor(config.colors.blue as ColorResolvable);
 
-        await interaction.channel.send({ embeds: [embed], components: [row] });
+        await interaction.channel.send({ embeds: [embed.toJSON()], components: [row] });
     }
 });
