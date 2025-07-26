@@ -229,3 +229,7 @@ Think about new plans for this discord bot.
 - Banks
 - Blackjacks
 - User
+
+**In cases of dockerfile problems**
+
+- Remove line `npm dedupe` from Dockerfile
