@@ -13,6 +13,7 @@ export default new Event({
         const command = client.commands.get(interaction.commandName);
         if (!command) return;
 
+        if (!interaction.isChatInputCommand()) return;
         const options = interaction.options as CommandInteractionOptionResolver;
 
         command.run({ client, interaction, options, t });

@@ -34,7 +34,13 @@ export default new Command({
             description: "Clique na reação abaixo para poder ver todos os canais",
         }).setColor(config.colors.green as ColorResolvable);
 
-        (await interaction.channel.send({ embeds: [embed.toJSON()] })).react('✅');
+        // Ensure the channel supports send (TextChannel or NewsChannel)
+        if ('send' in interaction.channel && typeof interaction.channel.send === 'function') {
+            (await interaction.channel.send({ embeds: [embed.toJSON()] })).react('✅');
+        } else {
+            await interaction.reply({ content: "Não foi possível enviar a mensagem de verificação neste canal.", ephemeral: true });
+            return;
+        }
         await interaction.reply({ content: "Pode excluir esta mensagem, apenas você vai ver ela...", ephemeral: true });
     }
 });

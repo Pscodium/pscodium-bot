@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable indent */
-import { ActionRowBuilder, APIActionRowComponent, APIMessageActionRowComponent, ApplicationCommandType, ButtonBuilder, ButtonStyle, ChannelType, ColorResolvable, ComponentType, EmbedBuilder, ModalBuilder, PermissionsBitField, TextChannel, TextInputBuilder, TextInputStyle } from "discord.js";
+import { ActionRowBuilder, ApplicationCommandType, ButtonBuilder, ButtonStyle, ColorResolvable, EmbedBuilder, TextChannel } from "discord.js";
 import { Command } from "../../structs/types/Command";
 import { config } from "../..";
 import { permissionService } from "../../services/permissions.service";
@@ -34,13 +34,13 @@ export default new Command({
                     label: "Abrir Ticket",
                     style: ButtonStyle.Primary,
                     custom_id: "open-ticket-button"
-        })) as unknown as APIActionRowComponent<APIMessageActionRowComponent>;
+        }));
 
         const embed = new EmbedBuilder({
             author: { name: "Pscodium Bot Ticket System" },
             description: "Clique no botão abaixo, logo em seguida, aparecerá uma caixa de texto onde você pode nos dar mais detalhes sobre a sua dúvida o que facilita muito no atendimento.",
         }).setColor(config.colors.blue as ColorResolvable);
 
-        await interaction.channel.send({ embeds: [embed.toJSON()], components: [row] });
+        await (interaction.channel as TextChannel).send({ embeds: [embed.toJSON()], components: [row] });
     }
 });

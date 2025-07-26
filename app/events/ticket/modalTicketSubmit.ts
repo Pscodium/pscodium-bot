@@ -1,4 +1,4 @@
-import { ActionRowBuilder, APIActionRowComponent, APIMessageActionRowComponent, ButtonBuilder, ButtonStyle, ColorResolvable, EmbedBuilder } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ColorResolvable, EmbedBuilder } from "discord.js";
 import { Event } from "../../structs/types/Event";
 import { channelManager } from "../../utils/ticket/ticketChannelManager";
 import { ticketDatabaseManager } from "../../utils/ticket/ticketDatabaseManager";
@@ -30,7 +30,7 @@ export default new Event({
                 label: "Entrar no canal",
                 style: ButtonStyle.Link,
                 url: channel?.url
-            })) as unknown as APIActionRowComponent<APIMessageActionRowComponent>;
+            }));
 
         const channelEmbed = new EmbedBuilder({
             author: { name: "Pscodium Bot Ticket System" },
@@ -57,7 +57,7 @@ export default new Event({
                 style: ButtonStyle.Primary,
                 customId: "ticket-claim-button",
                 emoji: "👋"
-            })) as unknown as APIActionRowComponent<APIMessageActionRowComponent>;
+            }));
         const adminEmbed = new EmbedBuilder({
             author: { name: "Pscodium Bot Ticket System" },
             title: "Bem-vindo(a), obrigado por abrir um ticket",

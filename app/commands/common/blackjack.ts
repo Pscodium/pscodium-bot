@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable no-case-declarations */
 /* eslint-disable indent */
-import { ActionRowBuilder, APIActionRowComponent, APIMessageActionRowComponent, ApplicationCommandOptionType, ApplicationCommandType, ButtonBuilder, ButtonInteraction, ButtonStyle, CacheType, ColorResolvable, ComponentType, EmbedBuilder } from "discord.js";
+import { ActionRowBuilder, ApplicationCommandOptionType, ApplicationCommandType, ButtonBuilder, ButtonInteraction, ButtonStyle, CacheType, ColorResolvable, ComponentType, EmbedBuilder } from "discord.js";
 import { config } from "../..";
 import { db } from "../../data-source";
 import { Command } from "../../structs/types/Command";
@@ -98,7 +98,7 @@ export default new Command({
             .setLabel("x2 double down")
             .setStyle(ButtonStyle.Secondary);
 
-        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(hit, stand, doubleDown) as unknown as APIActionRowComponent<APIMessageActionRowComponent>;
+        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(hit, stand, doubleDown);
 
         const emojiList = await db.Card.findAll();
 
@@ -209,7 +209,7 @@ export default new Command({
             };
 
             if (continueInteraction && lastPlay) {
-                const newRow = new ActionRowBuilder().addComponents(stand, doubleDown) as unknown as APIActionRowComponent<APIMessageActionRowComponent>;
+                const newRow = new ActionRowBuilder<ButtonBuilder>().addComponents(stand, doubleDown);
 
                 interaction.update({
                     content: '',

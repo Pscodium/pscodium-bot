@@ -76,7 +76,7 @@ class ChannelManager {
         const user = await ticketDatabaseManager.findUserByChannelId(interaction.channelId);
         if (!user) return;
 
-        interaction.channel?.send({content: `<@${user.id}>`, embeds: [
+        (interaction.channel as TextChannel)?.send({content: `<@${user.id}>`, embeds: [
             new EmbedBuilder({
                 author: { name: "Pscodium Bot Ticket System" },
                 title: "Obrigado pela espera.",
