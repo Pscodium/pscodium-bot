@@ -41,6 +41,12 @@ WEBSERVER_PORT=6000
 
 5. `npm run startup` (to run bot and api)
 
+## Local Tests
+
+1. `docker build -t pscodium-bot .`
+
+2. `docker run -p 3000:3000 pscodium-bot`
+
 ## Initialization
 
 #### After start this project do you need to set somethings.
