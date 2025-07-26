@@ -30,7 +30,7 @@ export default class DefaultService {
     }
 
     formatedCash(amount: number | string | undefined | null) {
-        if (!amount) return;
+        if (!amount) return "0,00";
         if (typeof amount == 'number') {
             amount = parseFloat(String(amount));
         } else {

@@ -1,48 +1,25 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable no-case-declarations */
 /* eslint-disable indent */
-import { ActionRowBuilder, ApplicationCommandOptionType, ApplicationCommandType, ButtonBuilder, ButtonInteraction, ButtonStyle, CacheType, ColorResolvable, ComponentType, EmbedBuilder } from "discord.js";
+import { ActionRowBuilder, ApplicationCommandOptionType, ApplicationCommandType, ButtonBuilder, ButtonInteraction, ButtonStyle, ColorResolvable, ComponentType, EmbedBuilder } from "discord.js";
 import { config } from "../..";
 import { db } from "../../data-source";
 import { Command } from "../../structs/types/Command";
 import { blackjackService } from "../../services/blackjack.service";
 import { gameService } from "../../services/games.service";
-
-interface PlayProps {
-    countHits?: number;
-    continueInteraction?: boolean;
-    lastPlay?: boolean;
-    draw?: boolean;
-
-    firstPlayerCard?: EmojiCode;
-    secondPlayerCard?: EmojiCode;
-    thirdPlayerCard?: EmojiCode;
-    fourthPlayerCard?: EmojiCode;
-    fifthPlayerCard?: EmojiCode;
-
-    userPlay?: number;
-    secondUserPlay?: number;
-    thirdUserPlay?: number;
-    fourthUserPlay?: number;
-
-    firstDealerCard?: EmojiCode;
-    secondDealerCard?: EmojiCode;
-    thirdDealerCard?: EmojiCode;
-    fourthDealerCard?: EmojiCode;
-    fifthDealerCard?: EmojiCode;
-
-    dealerPlay?: number;
-    secondDealerPlay?: number;
-    thirdDealerPlay?: number;
-    fourthDealerPlay?: number;
-
-    userWin?: boolean;
-    interaction: ButtonInteraction<CacheType>;
-}
-
 interface EmojiCode {
     emoji: string;
     value: string;
+}
+
+interface GameState {
+    playerCards: EmojiCode[];
+    dealerCards: EmojiCode[];
+    playerScores: number[];
+    dealerScores: number[];
+    countHits: number;
 }
 
 export default new Command({
@@ -58,245 +35,254 @@ export default new Command({
         }
     ],
     async run({ interaction, options, t }) {
-
         const member = interaction.user;
         const storedPlay = await db.Blackjack.findOne({
-            where: {
-                userId: member.id
-            }
+            where: { userId: member.id }
         });
-        const bet = storedPlay? Number(storedPlay.bet) : options.getNumber('bet');
-
+        
+        const bet = storedPlay ? Number(storedPlay.bet) : options.getNumber('bet');
         const storedUser = await db.User.findOne({
-            where: {
-                id: member.id
-            },
-            include: {
-                model: db.Bank
-            }
+            where: { id: member.id },
+            include: { model: db.Bank }
         });
+        
         if (!storedUser) return;
         const wallet = storedUser.bank.balance;
-
-        if (bet && wallet < bet || bet == 0) {
+        
+        
+        if (bet && wallet < bet || Number(wallet) === 0) {
             interaction.reply({ content: t.translate('PLAYER_NOT_HAVE_MONEY') });
             return;
         }
 
-        const hit = new ButtonBuilder()
-            .setCustomId("hit")
-            .setLabel("hit")
-            .setStyle(ButtonStyle.Secondary);
 
-        const stand = new ButtonBuilder()
-            .setCustomId("stand")
-            .setLabel("stand")
-            .setStyle(ButtonStyle.Secondary);
+        const createButtons = (isLastPlay = false) => {
+            const hit = new ButtonBuilder()
+                .setCustomId("hit")
+                .setLabel("hit")
+                .setStyle(ButtonStyle.Secondary);
 
-        const doubleDown = new ButtonBuilder()
-            .setCustomId("double")
-            .setLabel("x2 double down")
-            .setStyle(ButtonStyle.Secondary);
+            const stand = new ButtonBuilder()
+                .setCustomId("stand")
+                .setLabel("stand")
+                .setStyle(ButtonStyle.Secondary);
 
-        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(hit, stand, doubleDown);
+            const doubleDown = new ButtonBuilder()
+                .setCustomId("double")
+                .setLabel("x2 double down")
+                .setStyle(ButtonStyle.Secondary);
+
+            return new ActionRowBuilder<ButtonBuilder>()
+                .addComponents(isLastPlay ? [stand, doubleDown] : [hit, stand, doubleDown]);
+        };
 
         const emojiList = await db.Card.findAll();
-
-        const emojiCode: EmojiCode[] = emojiList.map(emoji => {
-            return { emoji: emoji.emoji, value: emoji.value };
-        });
-
-        const resolvableEmoji: EmojiCode = { emoji: "false", value: "false" };
+        const emojiCode: EmojiCode[] = emojiList.map(emoji => ({
+            emoji: emoji.emoji,
+            value: emoji.value
+        }));
 
         const selectedEmojis: EmojiCode[] = [];
-
-        function getRandomEmoji(list: EmojiCode[]) {
-            if (selectedEmojis.length === list.length) {
-                return null;
-            }
-
+        const getRandomEmoji = (list: EmojiCode[]) => {
+            if (selectedEmojis.length === list.length) return null;
+            
             let randomEmoji: EmojiCode;
-
             do {
-                const randomIndex = Math.floor(Math.random() * list.length);
-                randomEmoji = list[randomIndex];
+                randomEmoji = list[Math.floor(Math.random() * list.length)];
             } while (selectedEmojis.includes(randomEmoji));
-
+            
             selectedEmojis.push(randomEmoji);
-
             return randomEmoji;
-        }
+        };
 
-        function removeLetters(str: string) {
-            return Number(str.replace(/[^\d]/g, ''));
-        }
+        const removeLetters = (str: string) => Number(str.replace(/[^\d]/g, ''));
 
-        let countHits = 0;
-        const firstUserCard = storedPlay? storedPlay.firstPlayerCard : getRandomEmoji(emojiCode) ?? resolvableEmoji;
-        const secondUserCard = storedPlay? storedPlay.secondPlayerCard : getRandomEmoji(emojiCode) ?? resolvableEmoji;
-        const thirdUserCard = storedPlay? storedPlay.thirdPlayerCard : getRandomEmoji(emojiCode) ?? resolvableEmoji;
-        const fourthUserCard = storedPlay? storedPlay.fourthPlayerCard : getRandomEmoji(emojiCode) ?? resolvableEmoji;
-        const fifthUserCard = storedPlay? storedPlay.fifthPlayerCard : getRandomEmoji(emojiCode) ?? resolvableEmoji;
+        const initGameState = (): GameState => {
+            const resolvableEmoji: EmojiCode = { emoji: "false", value: "false" };
+            
+            const playerCards = [
+                storedPlay?.firstPlayerCard || getRandomEmoji(emojiCode) || resolvableEmoji,
+                storedPlay?.secondPlayerCard || getRandomEmoji(emojiCode) || resolvableEmoji,
+                storedPlay?.thirdPlayerCard || getRandomEmoji(emojiCode) || resolvableEmoji,
+                storedPlay?.fourthPlayerCard || getRandomEmoji(emojiCode) || resolvableEmoji,
+                storedPlay?.fifthPlayerCard || getRandomEmoji(emojiCode) || resolvableEmoji
+            ];
 
-        const firstDealerCard = storedPlay? storedPlay.firstDealerCard : getRandomEmoji(emojiCode) ?? resolvableEmoji;
-        const secondDealerCard = storedPlay? storedPlay.secondDealerCard : getRandomEmoji(emojiCode) ?? resolvableEmoji;
-        const thirdDealerCard = storedPlay? storedPlay.thirdDealerCard : getRandomEmoji(emojiCode) ?? resolvableEmoji;
-        const fourthDealerCard = storedPlay? storedPlay.fourthDealerCard : getRandomEmoji(emojiCode) ?? resolvableEmoji;
-        const fifthDealerCard = storedPlay? storedPlay.fifthDealerCard : getRandomEmoji(emojiCode) ?? resolvableEmoji;
+            const dealerCards = [
+                storedPlay?.firstDealerCard || getRandomEmoji(emojiCode) || resolvableEmoji,
+                storedPlay?.secondDealerCard || getRandomEmoji(emojiCode) || resolvableEmoji,
+                storedPlay?.thirdDealerCard || getRandomEmoji(emojiCode) || resolvableEmoji,
+                storedPlay?.fourthDealerCard || getRandomEmoji(emojiCode) || resolvableEmoji,
+                storedPlay?.fifthDealerCard || getRandomEmoji(emojiCode) || resolvableEmoji
+            ];
 
-        const userPlay = storedPlay? storedPlay.userPlay : removeLetters(firstUserCard.emoji) + removeLetters(secondUserCard.emoji);
-        const secondUserPlay = storedPlay? storedPlay.secondUserPlay : userPlay + removeLetters(thirdUserCard.emoji);
-        const thirdUserPlay = storedPlay? storedPlay.thirdUserPlay : secondUserPlay + removeLetters(fourthUserCard.emoji);
-        const fourthUserPlay = storedPlay? storedPlay.fourthUserPlay : thirdUserPlay + removeLetters(fifthUserCard.emoji);
+            const playerScores = [
+                storedPlay?.userPlay || removeLetters(playerCards[0].emoji) + removeLetters(playerCards[1].emoji),
+                0, 0, 0
+            ];
+            playerScores[1] = storedPlay?.secondUserPlay || playerScores[0] + removeLetters(playerCards[2].emoji);
+            playerScores[2] = storedPlay?.thirdUserPlay || playerScores[1] + removeLetters(playerCards[3].emoji);
+            playerScores[3] = storedPlay?.fourthUserPlay || playerScores[2] + removeLetters(playerCards[4].emoji);
 
-        const dealerPlay = storedPlay? storedPlay.dealerPlay : removeLetters(firstDealerCard.emoji) + removeLetters(secondDealerCard.emoji);
-        const secondDealerPlay = storedPlay? storedPlay.secondDealerPlay : dealerPlay + removeLetters(thirdDealerCard.emoji);
-        const thirdDealerPlay = storedPlay? storedPlay.thirdDealerPlay : secondDealerPlay + removeLetters(fourthDealerCard.emoji);
-        const fourthDealerPlay = storedPlay? storedPlay.fourthDealerPlay : thirdDealerPlay + removeLetters(fifthDealerCard.emoji);
+            const dealerScores = [
+                storedPlay?.dealerPlay || removeLetters(dealerCards[0].emoji) + removeLetters(dealerCards[1].emoji),
+                0, 0, 0
+            ];
+            dealerScores[1] = storedPlay?.secondDealerPlay || dealerScores[0] + removeLetters(dealerCards[2].emoji);
+            dealerScores[2] = storedPlay?.thirdDealerPlay || dealerScores[1] + removeLetters(dealerCards[3].emoji);
+            dealerScores[3] = storedPlay?.fourthDealerPlay || dealerScores[2] + removeLetters(dealerCards[4].emoji);
+
+            return {
+                playerCards,
+                dealerCards,
+                playerScores,
+                dealerScores,
+                countHits: 0
+            };
+        };
+
+        const gameState = initGameState();
 
         if (!storedPlay) {
             await db.Blackjack.create({
-                bet: bet? bet : wallet,
-                dealerPlay: dealerPlay,
-                secondDealerPlay: secondDealerPlay,
-                thirdDealerPlay: thirdDealerPlay,
-                fourthDealerPlay: fourthDealerPlay,
-                firstDealerCard: firstDealerCard,
-                secondDealerCard: secondDealerCard,
-                thirdDealerCard: thirdDealerCard,
-                fourthDealerCard: fourthDealerCard,
-                fifthDealerCard: fifthDealerCard,
-
-                userPlay: userPlay,
-                secondUserPlay: secondUserPlay,
-                thirdUserPlay: thirdUserPlay,
-                fourthUserPlay: fourthUserPlay,
-                firstPlayerCard: firstUserCard,
-                secondPlayerCard: secondUserCard,
-                thirdPlayerCard: thirdUserCard,
-                fourthPlayerCard: fourthUserCard,
-                fifthPlayerCard: fifthUserCard,
+                bet: bet || wallet,
+                dealerPlay: gameState.dealerScores[0],
+                secondDealerPlay: gameState.dealerScores[1],
+                thirdDealerPlay: gameState.dealerScores[2],
+                fourthDealerPlay: gameState.dealerScores[3],
+                firstDealerCard: gameState.dealerCards[0],
+                secondDealerCard: gameState.dealerCards[1],
+                thirdDealerCard: gameState.dealerCards[2],
+                fourthDealerCard: gameState.dealerCards[3],
+                fifthDealerCard: gameState.dealerCards[4],
+                userPlay: gameState.playerScores[0],
+                secondUserPlay: gameState.playerScores[1],
+                thirdUserPlay: gameState.playerScores[2],
+                fourthUserPlay: gameState.playerScores[3],
+                firstPlayerCard: gameState.playerCards[0],
+                secondPlayerCard: gameState.playerCards[1],
+                thirdPlayerCard: gameState.playerCards[2],
+                fourthPlayerCard: gameState.playerCards[3],
+                fifthPlayerCard: gameState.playerCards[4],
                 userId: member.id
             });
         }
 
-        async function drawPlay({ userWin, firstPlayerCard, secondPlayerCard, thirdDealerCard, fourthPlayerCard, fifthPlayerCard, userPlay, secondUserPlay, thirdUserPlay, fourthUserPlay, firstDealerCard, interaction, secondDealerCard, thirdPlayerCard, fourthDealerCard, fifthDealerCard, dealerPlay, secondDealerPlay, thirdDealerPlay, fourthDealerPlay, continueInteraction, lastPlay, draw }: PlayProps) {
-            secondUserPlay = secondUserPlay === undefined ? 0 : secondUserPlay;
-            thirdUserPlay = thirdUserPlay === undefined ? 0 : thirdUserPlay;
-            fourthUserPlay = fourthUserPlay === undefined ? 0 : fourthUserPlay;
+        const createDrawTranslate = (playerCardsCount: number, dealerCardsCount: number, playerScore: number, dealerScore: number, win?: boolean) => {
+            let currentBalance = wallet;
 
-            secondDealerPlay = secondDealerPlay === undefined ? 0 : secondDealerPlay;
-            thirdDealerPlay = thirdDealerPlay === undefined ? 0 : thirdDealerPlay;
-            fourthDealerPlay = fourthDealerPlay === undefined ? 0 : fourthDealerPlay;
-            const userTotalSum = userPlay ? userPlay : 0 + secondUserPlay + thirdUserPlay + fourthUserPlay;
-            const dealerTotalSum = dealerPlay ? dealerPlay : 0 + secondDealerPlay + thirdDealerPlay + fourthDealerPlay;
+            if (win) {
+                currentBalance = bet? Number(currentBalance) + Number(bet) : Number(currentBalance) * 2;
+            } else {
+                currentBalance = bet ? Number(currentBalance) - Number(bet) : 0;
+            }
 
-            const draw_translate = {
-                UserTotalSum: userTotalSum,
-                FirstPlayerCard: firstPlayerCard?.value,
-                SecondPlayerCard: secondPlayerCard?.value,
-                ThirdPlayerCard: thirdPlayerCard?.value,
-                FourthPlayerCard: fourthPlayerCard?.value,
-                FifthPlayerCard: fifthPlayerCard?.value,
-                DealerTotalSum: dealerTotalSum,
-                FirstDealerCard: firstDealerCard?.value,
-                SecondDealerCard: secondDealerCard?.value,
-                ThirdDealerCard: thirdDealerCard?.value,
-                FourthDealerCard: fourthDealerCard?.value,
-                FifthDealerCard: fifthDealerCard?.value,
+            const translate: any = {
+                UserTotalSum: playerScore,
+                DealerTotalSum: dealerScore,
                 Profit: bet ? blackjackService.formatedCash(bet) : blackjackService.formatedCash(wallet),
-                CurrentBalance: bet ? blackjackService.formatedCash(Number(wallet) + Number(bet)) : blackjackService.formatedCash(wallet * 2)
+                CurrentBalance: blackjackService.formatedCash(currentBalance)
             };
 
-            if (continueInteraction && lastPlay) {
-                const newRow = new ActionRowBuilder<ButtonBuilder>().addComponents(stand, doubleDown);
-
-                interaction.update({
-                    content: '',
-                    embeds: [
-                        new EmbedBuilder({
-                            title: "Blackjack",
-                            author: {
-                                name: interaction.user.tag,
-                                iconURL: interaction.user.avatarURL() || undefined,
-                            },
-                            description: t.translate('BLACKJACK_PLAY_EMBED', draw_translate)
-                        })
-                    ], components: [newRow]
-                });
-                return;
+            const playerCardNames = ['FirstPlayerCard', 'SecondPlayerCard', 'ThirdPlayerCard', 'FourthPlayerCard', 'FifthPlayerCard'];
+            for (let i = 0; i < playerCardsCount && i < 5; i++) {
+                translate[playerCardNames[i]] = gameState.playerCards[i]?.value;
             }
 
-            if (continueInteraction) {
-                interaction.update({
-                    content: '',
-                    embeds: [
-                        new EmbedBuilder({
-                            title: "Blackjack",
-                            author: {
-                                name: interaction.user.tag,
-                                iconURL: interaction.user.avatarURL() || undefined,
-                            },
-                            description: t.translate('BLACKJACK_PLAY_EMBED', draw_translate)
-                        })
-                    ], components: [row]
-                });
-                return;
+            const dealerCardNames = ['FirstDealerCard', 'SecondDealerCard', 'ThirdDealerCard', 'FourthDealerCard', 'FifthDealerCard'];
+            for (let i = 0; i < dealerCardsCount && i < 5; i++) {
+                translate[dealerCardNames[i]] = gameState.dealerCards[i]?.value;
             }
 
-            if (draw) {
-                await db.Blackjack.destroy({
-                    where: {
-                        userId: member.id
-                    }
-                });
-                interaction.update({
-                    content: '',
-                    embeds: [
-                        new EmbedBuilder({
-                            title: "Blackjack",
-                            author: {
-                                name: interaction.user.tag,
-                                iconURL: interaction.user.avatarURL() || undefined,
-                            },
-                            description: t.translate('BLACKJACK_DRAW_EMBED', draw_translate)
-                        }).setColor(config.colors.yellow as ColorResolvable)
-                    ], components: []
-                });
-                return;
+            return translate;
+        };
+
+        const endGame = async (userWin: boolean, isDraw: boolean, playerScore: number, dealerScore: number, playerCardsCount: number, dealerCardsCount: number) => {
+            const draw_translate = createDrawTranslate(playerCardsCount, dealerCardsCount, playerScore, dealerScore, userWin);
+
+            if (isDraw) {
+                await db.Blackjack.destroy({ where: { userId: member.id } });
+                return {
+                    embed: new EmbedBuilder({
+                        title: "Blackjack",
+                        author: {
+                            name: interaction.user.tag,
+                            iconURL: interaction.user.avatarURL() || undefined,
+                        },
+                        description: t.translate('BLACKJACK_DRAW_EMBED', draw_translate)
+                    }).setColor(config.colors.yellow as ColorResolvable),
+                    components: []
+                };
             }
 
             if (userWin) {
                 await blackjackService.blackjackUpdateBalanceWinner(bet, storedUser?.bankId);
-                await db.Blackjack.destroy({
-                    where: {
-                        userId: member.id
-                    }
-                });
                 await gameService.blackjackWin(storedUser?.gameId);
-                interaction.update({
-                    content: '',
-                    embeds: [
-                        new EmbedBuilder({
-                            title: "Blackjack",
-                            author: {
-                                name: interaction.user.tag,
-                                iconURL: interaction.user.avatarURL() || undefined,
-                            },
-                            description: t.translate('BLACKJACK_WINNER_EMBED', draw_translate)
-                        }).setColor(config.colors.green as ColorResolvable)
-                    ], components: []
-                });
-                return;
+            } else {
+                await blackjackService.blackjackUpdateBalanceLoser(bet, storedUser?.bankId);
+                await gameService.blackjackLoss(storedUser?.gameId);
             }
-            await blackjackService.blackjackUpdateBalanceLoser(bet, storedUser?.bankId);
-            await db.Blackjack.destroy({
-                where: {
-                    userId: member.id
+
+            await db.Blackjack.destroy({ where: { userId: member.id } });
+
+            return {
+                embed: new EmbedBuilder({
+                    title: "Blackjack",
+                    author: {
+                        name: interaction.user.tag,
+                        iconURL: interaction.user.avatarURL() || undefined,
+                    },
+                    description: t.translate(userWin ? 'BLACKJACK_WINNER_EMBED' : 'BLACKJACK_LOSER_EMBED', draw_translate)
+                }).setColor(userWin ? config.colors.green as ColorResolvable : config.colors.red as ColorResolvable),
+                components: []
+            };
+        };
+
+        const compareScores = (playerScore: number, dealerScores: number[], _playerCardsCount: number) => {
+            for (let i = 0; i < dealerScores.length; i++) {
+                const dealerScore = dealerScores[i];
+                const dealerCardsCount = i + 2;
+                
+                if (dealerScore > playerScore && dealerScore <= 21) {
+                    return { userWin: false, isDraw: false, finalDealerScore: dealerScore, dealerCardsCount };
                 }
-            });
-            await gameService.blackjackLoss(storedUser?.gameId);
-            interaction.update({
+                if (dealerScore === playerScore) {
+                    return { userWin: false, isDraw: true, finalDealerScore: dealerScore, dealerCardsCount };
+                }
+                if (dealerScore > 21) {
+                    return { userWin: true, isDraw: false, finalDealerScore: dealerScore, dealerCardsCount };
+                }
+            }
+            return { userWin: true, isDraw: false, finalDealerScore: dealerScores[dealerScores.length - 1], dealerCardsCount: dealerScores.length + 1 };
+        };
+
+        const handleHit = async (buttonInteraction: ButtonInteraction) => {
+            gameState.countHits += 1;
+            const currentPlayerScore = gameState.playerScores[gameState.countHits];
+            const playerCardsCount = gameState.countHits + 2;
+            
+            if (currentPlayerScore > 21) {
+                const result = await endGame(false, false, currentPlayerScore, removeLetters(gameState.dealerCards[0].emoji), playerCardsCount, 1);
+                return buttonInteraction.update({
+                    content: '',
+                    embeds: [result.embed],
+                    components: result.components
+                });
+            }
+
+            if (currentPlayerScore === 21) {
+                const result = await endGame(true, false, currentPlayerScore, removeLetters(gameState.dealerCards[0].emoji), playerCardsCount, 1);
+                return buttonInteraction.update({
+                    content: '',
+                    embeds: [result.embed],
+                    components: result.components
+                });
+            }
+
+            const isLastPlay = gameState.countHits >= 3;
+            const draw_translate = createDrawTranslate(playerCardsCount, 1, currentPlayerScore, removeLetters(gameState.dealerCards[0].emoji));
+
+            buttonInteraction.update({
                 content: '',
                 embeds: [
                     new EmbedBuilder({
@@ -305,39 +291,25 @@ export default new Command({
                             name: interaction.user.tag,
                             iconURL: interaction.user.avatarURL() || undefined,
                         },
-                        description: t.translate('BLACKJACK_LOSER_EMBED', draw_translate)
-                    }).setColor(config.colors.red as ColorResolvable)
-                ], components: []
+                        description: t.translate('BLACKJACK_PLAY_EMBED', draw_translate)
+                    })
+                ],
+                components: [createButtons(isLastPlay)]
             });
-            return;
-        }
+        };
 
-        /**
-         * TODO: Make this condition when you fix ace value to variable between 11 and 1.
-         */
-        // if (userPlay === 21) {
-        //     const embed = new EmbedBuilder({
-        //         title: "Blackjack",
-        //         author: {
-        //             name: interaction.user.tag,
-        //             iconURL: interaction.user.avatarURL() || undefined,
-        //         },
-        //         description: `
-        //         **You | ${userPlay}**
-        //         ${firstUserCard.value} ${secondUserCard.value}
-        //         **Dealer | ${removeLetters(firstDealerCard.emoji)}**
-        //         ${firstDealerCard.value}
-
-        //         Your profit: ${bet? formatedCash(bet) : formatedCash(wallet)}
-        //         Current balance: ${bet? formatedCash(wallet + bet) : formatedCash(wallet*2)}
-
-        //         **WINNER**
-        //         `
-        //     }).setColor(config.colors.green as ColorResolvable);
-
-        //     return interaction.reply({embeds: [embed.toJSON()]});
-
-        // }
+        const handleStand = async (buttonInteraction: ButtonInteraction) => {
+            const currentPlayerScore = gameState.playerScores[gameState.countHits];
+            const playerCardsCount = gameState.countHits + 2;
+            const { userWin, isDraw, finalDealerScore, dealerCardsCount } = compareScores(currentPlayerScore, gameState.dealerScores, playerCardsCount);
+            
+            const result = await endGame(userWin, isDraw, currentPlayerScore, finalDealerScore, playerCardsCount, dealerCardsCount);
+            buttonInteraction.update({
+                content: '',
+                embeds: [result.embed],
+                components: result.components
+            });
+        };
 
         const embed = new EmbedBuilder({
             title: "Blackjack",
@@ -345,1007 +317,48 @@ export default new Command({
                 name: interaction.user.tag,
                 iconURL: interaction.user.avatarURL() || undefined,
             },
-            description: t.translate(storedPlay? "BLACKJACK_BET_PLAY_EMBED":"BLACKJACK_PLAY_EMBED", {
-                UserTotalSum: userPlay,
-                FirstPlayerCard: firstUserCard.value,
-                SecondPlayerCard: secondUserCard.value,
-                DealerTotalSum: removeLetters(firstDealerCard.emoji),
-                FirstDealerCard: firstDealerCard.value,
+            description: t.translate(storedPlay ? "BLACKJACK_BET_PLAY_EMBED" : "BLACKJACK_PLAY_EMBED", {
+                UserTotalSum: gameState.playerScores[0],
+                FirstPlayerCard: gameState.playerCards[0].value,
+                SecondPlayerCard: gameState.playerCards[1].value,
+                DealerTotalSum: removeLetters(gameState.dealerCards[0].emoji),
+                FirstDealerCard: gameState.dealerCards[0].value,
                 Bet: blackjackService.formatedCash(storedPlay?.bet)
             })
         });
-        const msg = await interaction.reply({ content: storedPlay? t.translate("BLACKJACK_CONTINUE_PLAY_MESSAGE") : "" , embeds: [embed.toJSON()], components: [row], fetchReply: true });
+
+        const msg = await interaction.reply({
+            content: storedPlay ? t.translate("BLACKJACK_CONTINUE_PLAY_MESSAGE") : "",
+            embeds: [embed.toJSON()],
+            components: [createButtons()],
+            fetchReply: true
+        });
 
         const collector = msg.createMessageComponentCollector({
             componentType: ComponentType.Button
         });
 
         collector.on('collect', async (buttonInteraction) => {
-
             const lastMessageId = interaction.channel?.lastMessageId;
             const buttonInteracionMessageId = buttonInteraction.message.id;
 
             if (lastMessageId !== buttonInteracionMessageId) {
-                buttonInteraction.update({ content: t.translate('GENERIC_INVALID_COMMAND_INTERACTION'), embeds: [], components: [] });
+                buttonInteraction.update({ 
+                    content: t.translate('GENERIC_INVALID_COMMAND_INTERACTION'), 
+                    embeds: [], 
+                    components: [] 
+                });
                 return;
             }
 
-            const { user } = buttonInteraction;
-
-            if (user.id != member.id) {
-                return;
-            }
+            if (buttonInteraction.user.id !== member.id) return;
 
             switch (buttonInteraction.customId) {
                 case 'hit':
-                    countHits += 1;
-                    if (countHits >= 3) {
-                        if (fourthUserPlay > 21) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                userWin: false,
-                                fourthUserPlay: fourthUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                fourthPlayerCard: fourthUserCard,
-                                fifthPlayerCard: fifthUserCard,
-                                dealerPlay: removeLetters(firstDealerCard.emoji),
-                                firstDealerCard: firstDealerCard
-                            });
-                            break;
-                        }
-                        if (fourthUserPlay == 21) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                userWin: true,
-                                fourthUserPlay: fourthUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                fourthPlayerCard: fourthUserCard,
-                                fifthPlayerCard: fifthUserCard,
-                                dealerPlay: removeLetters(firstDealerCard.emoji),
-                                firstDealerCard: firstDealerCard
-                            });
-                            break;
-                        }
-                        drawPlay({
-                            interaction: buttonInteraction,
-                            continueInteraction: true,
-                            lastPlay: true,
-                            fourthUserPlay: fourthUserPlay,
-                            firstPlayerCard: firstUserCard,
-                            secondPlayerCard: secondUserCard,
-                            thirdPlayerCard: thirdUserCard,
-                            fourthPlayerCard: fourthUserCard,
-                            fifthPlayerCard: fifthUserCard,
-                            dealerPlay: removeLetters(firstDealerCard.emoji),
-                            firstDealerCard: firstDealerCard
-                        });
-                        break;
-                    }
-                    if (countHits == 2) {
-                        if (thirdUserPlay > 21) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                userWin: false,
-                                thirdUserPlay: thirdUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                fourthPlayerCard: fourthUserCard,
-                                dealerPlay: removeLetters(firstDealerCard.emoji),
-                                firstDealerCard: firstDealerCard
-                            });
-                            break;
-                        }
-                        if (thirdUserPlay == 21) {
-
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                userWin: true,
-                                thirdUserPlay: thirdUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                fourthPlayerCard: fourthUserCard,
-                                dealerPlay: removeLetters(firstDealerCard.emoji),
-                                firstDealerCard: firstDealerCard
-                            });
-                            break;
-                        }
-                        drawPlay({
-                            interaction: buttonInteraction,
-                            continueInteraction: true,
-                            thirdUserPlay: thirdUserPlay,
-                            firstPlayerCard: firstUserCard,
-                            secondPlayerCard: secondUserCard,
-                            thirdPlayerCard: thirdUserCard,
-                            fourthPlayerCard: fourthUserCard,
-                            dealerPlay: removeLetters(firstDealerCard.emoji),
-                            firstDealerCard: firstDealerCard
-                        });
-                        break;
-                    }
-                    if (secondUserPlay > 21) {
-                        drawPlay({
-                            interaction: buttonInteraction,
-                            userWin: false,
-                            secondUserPlay: secondUserPlay,
-                            firstPlayerCard: firstUserCard,
-                            secondPlayerCard: secondUserCard,
-                            thirdPlayerCard: thirdUserCard,
-                            dealerPlay: removeLetters(firstDealerCard.emoji),
-                            firstDealerCard: firstDealerCard
-                        });
-                        break;
-                    }
-                    if (secondUserPlay == 21) {
-
-                        drawPlay({
-                            interaction: buttonInteraction,
-                            userWin: true,
-                            secondUserPlay: secondUserPlay,
-                            firstPlayerCard: firstUserCard,
-                            secondPlayerCard: secondUserCard,
-                            thirdPlayerCard: thirdUserCard,
-                            dealerPlay: removeLetters(firstDealerCard.emoji),
-                            firstDealerCard: firstDealerCard
-                        });
-                        break;
-                    }
-                    drawPlay({
-                        interaction: buttonInteraction,
-                        continueInteraction: true,
-                        secondUserPlay: secondUserPlay,
-                        firstPlayerCard: firstUserCard,
-                        secondPlayerCard: secondUserCard,
-                        thirdPlayerCard: thirdUserCard,
-                        dealerPlay: removeLetters(firstDealerCard.emoji),
-                        firstDealerCard: firstDealerCard
-                    });
+                    await handleHit(buttonInteraction);
                     break;
-
                 case 'stand':
-                    if (countHits === 3) {
-                        if (dealerPlay > fourthUserPlay && dealerPlay <= 21) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                userWin: false,
-                                fourthUserPlay: fourthUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                fourthPlayerCard: fourthUserCard,
-                                fifthPlayerCard: fifthUserCard,
-
-                                dealerPlay: dealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard
-                            });
-                            break;
-                        }
-                        if (dealerPlay == fourthDealerPlay) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                draw: true,
-                                fourthUserPlay: fourthUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                fourthPlayerCard: fourthUserCard,
-                                fifthPlayerCard: fifthUserCard,
-
-                                dealerPlay: dealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard
-                            });
-                            break;
-                        }
-                        if (dealerPlay > 21) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                userWin: true,
-                                fourthUserPlay: fourthUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                fourthPlayerCard: fourthUserCard,
-                                fifthPlayerCard: fifthUserCard,
-
-                                dealerPlay: dealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard
-                            });
-                            break;
-                        }
-                        if (secondDealerPlay > fourthUserPlay && secondDealerPlay <= 21) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                userWin: false,
-                                fourthUserPlay: fourthUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                fourthPlayerCard: fourthUserCard,
-                                fifthPlayerCard: fifthUserCard,
-
-                                secondDealerPlay: secondDealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                                thirdDealerCard: thirdDealerCard,
-                            });
-                            break;
-                        }
-                        if (secondDealerPlay == fourthUserPlay) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                draw: true,
-                                fourthUserPlay: fourthUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                fourthPlayerCard: fourthUserCard,
-                                fifthPlayerCard: fifthUserCard,
-
-                                secondDealerPlay: secondDealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                                thirdDealerCard: thirdDealerCard,
-                            });
-                            break;
-                        }
-                        if (secondDealerPlay > 21) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                userWin: true,
-                                fourthUserPlay: fourthUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                fourthPlayerCard: fourthUserCard,
-                                fifthPlayerCard: fifthUserCard,
-
-                                secondDealerPlay: secondDealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                                thirdDealerCard: thirdDealerCard,
-                            });
-                            break;
-                        }
-                        if (thirdDealerPlay > fourthUserPlay && thirdDealerPlay <= 21) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                userWin: false,
-                                fourthUserPlay: fourthUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                fourthPlayerCard: fourthUserCard,
-                                fifthPlayerCard: fifthUserCard,
-
-                                thirdDealerPlay: thirdDealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                                thirdDealerCard: thirdDealerCard,
-                                fourthDealerCard: fourthDealerCard,
-                            });
-                            break;
-                        }
-                        if (thirdDealerPlay == fourthUserPlay) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                draw: true,
-                                fourthUserPlay: fourthUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                fourthPlayerCard: fourthUserCard,
-                                fifthPlayerCard: fifthUserCard,
-
-                                thirdDealerPlay: thirdDealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                                thirdDealerCard: thirdDealerCard,
-                                fourthDealerCard: fourthDealerCard,
-                            });
-                            break;
-                        }
-                        if (thirdDealerPlay > 21) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                userWin: true,
-                                fourthUserPlay: fourthUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                fourthPlayerCard: fourthUserCard,
-                                fifthPlayerCard: fifthUserCard,
-
-                                thirdDealerPlay: thirdDealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                                thirdDealerCard: thirdDealerCard,
-                                fourthDealerCard: fourthDealerCard,
-                            });
-                            break;
-                        }
-                        if (fourthDealerPlay > fourthUserPlay && fourthDealerPlay <= 21) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                userWin: false,
-                                fourthUserPlay: fourthUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                fourthPlayerCard: fourthUserCard,
-                                fifthPlayerCard: fifthUserCard,
-
-                                fourthDealerPlay: fourthDealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                                thirdDealerCard: thirdDealerCard,
-                                fourthDealerCard: fourthDealerCard,
-                                fifthDealerCard: fifthDealerCard
-                            });
-                            break;
-                        }
-                        if (fourthDealerPlay == fourthUserPlay) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                draw: true,
-                                fourthUserPlay: fourthUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                fourthPlayerCard: fourthUserCard,
-                                fifthPlayerCard: fifthUserCard,
-
-                                fourthDealerPlay: fourthDealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                                thirdDealerCard: thirdDealerCard,
-                                fourthDealerCard: fourthDealerCard,
-                                fifthDealerCard: fifthDealerCard
-                            });
-                            break;
-                        }
-                        if (fourthDealerPlay > 21) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                userWin: true,
-                                fourthUserPlay: fourthUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                fourthPlayerCard: fourthUserCard,
-                                fifthPlayerCard: fifthUserCard,
-
-                                fourthDealerPlay: fourthDealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                                thirdDealerCard: thirdDealerCard,
-                                fourthDealerCard: fourthDealerCard,
-                                fifthDealerCard: fifthDealerCard
-                            });
-                            break;
-                        }
-                        drawPlay({
-                            interaction: buttonInteraction,
-                            userWin: true,
-                            fourthUserPlay: fourthUserPlay,
-                            firstPlayerCard: firstUserCard,
-                            secondPlayerCard: secondUserCard,
-                            thirdPlayerCard: thirdUserCard,
-                            fourthPlayerCard: fourthUserCard,
-                            fifthPlayerCard: fifthUserCard,
-
-                            fourthDealerPlay: fourthDealerPlay,
-                            firstDealerCard: firstDealerCard,
-                            secondDealerCard: secondDealerCard,
-                            thirdDealerCard: thirdDealerCard,
-                            fourthDealerCard: fourthDealerCard,
-                            fifthDealerCard: fifthDealerCard
-                        });
-                        break;
-                    }
-                    if (countHits === 2) {
-                        if (dealerPlay > thirdUserPlay && dealerPlay <= 21) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                userWin: false,
-                                thirdUserPlay: thirdUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                fourthPlayerCard: fourthUserCard,
-                                dealerPlay: dealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                            });
-                            break;
-                        }
-                        if (dealerPlay == thirdUserPlay) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                draw: true,
-                                thirdUserPlay: thirdUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                fourthPlayerCard: fourthUserCard,
-                                dealerPlay: dealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                            });
-                            break;
-                        }
-                        if (dealerPlay > 21) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                userWin: true,
-                                thirdUserPlay: thirdUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                fourthPlayerCard: fourthUserCard,
-                                dealerPlay: dealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                            });
-                            break;
-                        }
-                        if (secondDealerPlay > thirdUserPlay && secondDealerPlay <= 21) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                userWin: false,
-                                thirdUserPlay: thirdUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                fourthPlayerCard: fourthUserCard,
-                                secondDealerPlay: secondDealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                                thirdDealerCard: thirdDealerCard
-                            });
-                            break;
-                        }
-                        if (secondDealerPlay == thirdUserPlay) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                draw: true,
-                                thirdUserPlay: thirdUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                fourthPlayerCard: fourthUserCard,
-                                secondDealerPlay: secondDealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                                thirdDealerCard: thirdDealerCard
-                            });
-                            break;
-                        }
-                        if (secondDealerPlay > 21) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                userWin: true,
-                                thirdUserPlay: thirdUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                fourthPlayerCard: fourthUserCard,
-                                secondDealerPlay: secondDealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                                thirdDealerCard: thirdDealerCard
-                            });
-                            break;
-                        }
-                        if (thirdDealerPlay > thirdUserPlay && thirdDealerPlay <= 21) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                userWin: false,
-                                thirdUserPlay: thirdUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                fourthPlayerCard: fourthUserCard,
-                                thirdDealerPlay: thirdDealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                                thirdDealerCard: thirdDealerCard,
-                                fourthDealerCard: fourthDealerCard
-                            });
-                            break;
-                        }
-                        if (thirdDealerPlay == thirdUserPlay) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                draw: true,
-                                thirdUserPlay: thirdUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                fourthPlayerCard: fourthUserCard,
-                                thirdDealerPlay: thirdDealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                                thirdDealerCard: thirdDealerCard,
-                                fourthDealerCard: fourthDealerCard
-                            });
-                            break;
-                        }
-                        if (thirdDealerPlay > 21) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                userWin: true,
-                                thirdUserPlay: thirdUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                fourthPlayerCard: fourthUserCard,
-                                thirdDealerPlay: thirdDealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                                thirdDealerCard: thirdDealerCard,
-                                fourthDealerCard: fourthDealerCard
-                            });
-                            break;
-                        }
-                        if (fourthDealerPlay > thirdUserPlay && fourthDealerPlay <= 21) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                userWin: false,
-                                thirdUserPlay: thirdUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                fourthPlayerCard: fourthUserCard,
-
-                                fourthDealerPlay: fourthDealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                                thirdDealerCard: thirdDealerCard,
-                                fourthDealerCard: fourthDealerCard,
-                                fifthDealerCard: fifthDealerCard
-                            });
-                            break;
-                        }
-                        if (fourthDealerPlay == thirdUserPlay) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                draw: true,
-                                thirdUserPlay: thirdUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                fourthPlayerCard: fourthUserCard,
-
-                                fourthDealerPlay: fourthDealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                                thirdDealerCard: thirdDealerCard,
-                                fourthDealerCard: fourthDealerCard,
-                                fifthDealerCard: fifthDealerCard
-                            });
-                            break;
-                        }
-                        if (fourthDealerPlay > 21) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                userWin: true,
-                                thirdUserPlay: thirdUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                fourthPlayerCard: fourthUserCard,
-
-                                fourthDealerPlay: fourthDealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                                thirdDealerCard: thirdDealerCard,
-                                fourthDealerCard: fourthDealerCard,
-                                fifthDealerCard: fifthDealerCard
-                            });
-                            break;
-                        }
-                        drawPlay({
-                            interaction: buttonInteraction,
-                            userWin: true,
-                            thirdUserPlay: thirdUserPlay,
-                            firstPlayerCard: firstUserCard,
-                            secondPlayerCard: secondUserCard,
-                            thirdPlayerCard: thirdUserCard,
-                            fourthPlayerCard: fourthUserCard,
-
-                            fourthDealerPlay: fourthDealerPlay,
-                            firstDealerCard: firstDealerCard,
-                            secondDealerCard: secondDealerCard,
-                            thirdDealerCard: thirdDealerCard,
-                            fourthDealerCard: fourthDealerCard,
-                            fifthDealerCard: fifthDealerCard
-                        });
-                        break;
-                    }
-                    if (countHits === 1) {
-                        // aqui o dealer vai ganhar de primeira jogada
-                        if (dealerPlay > secondUserPlay && dealerPlay <= 21) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                userWin: false,
-                                secondUserPlay: secondUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                dealerPlay: dealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard
-                            });
-                            break;
-                        }
-                        if (dealerPlay == secondUserPlay) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                draw: true,
-                                secondUserPlay: secondUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                dealerPlay: dealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard
-                            });
-                            break;
-                        }
-                        if (secondDealerPlay > secondUserPlay && secondDealerPlay <= 21) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                userWin: false,
-                                secondUserPlay: secondUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                secondPlayerCard: secondUserCard,
-                                secondDealerPlay: secondDealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                                thirdDealerCard: thirdDealerCard
-                            });
-                            break;
-                        }
-                        if (secondDealerPlay == secondUserPlay) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                draw: true,
-                                secondUserPlay: secondUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                secondPlayerCard: secondUserCard,
-                                secondDealerPlay: secondDealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                                thirdDealerCard: thirdDealerCard
-                            });
-                            break;
-                        }
-                        if (secondDealerPlay > 21) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                userWin: true,
-                                secondUserPlay: secondUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                secondDealerPlay: secondDealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                                thirdDealerCard: thirdDealerCard
-                            });
-                            break;
-                        }
-                        if (thirdDealerPlay > secondUserPlay && thirdDealerPlay <= 21) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                userWin: false,
-                                secondUserPlay: secondUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                thirdDealerPlay: thirdDealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                                thirdDealerCard: thirdDealerCard,
-                                fourthDealerCard: fourthDealerCard
-                            });
-                            break;
-                        }
-                        if (thirdDealerPlay == secondUserPlay) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                draw: true,
-                                secondUserPlay: secondUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                thirdDealerPlay: thirdDealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                                thirdDealerCard: thirdDealerCard,
-                                fourthDealerCard: fourthDealerCard
-                            });
-                            break;
-                        }
-                        if (thirdDealerPlay > 21) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                userWin: true,
-                                secondUserPlay: secondUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-                                secondDealerPlay: thirdDealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                                thirdDealerCard: thirdDealerCard,
-                                fourthDealerCard: fourthDealerCard
-                            });
-                            break;
-                        }
-                        if (fourthDealerPlay > secondUserPlay && fourthDealerPlay <= 21) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                userWin: false,
-                                secondUserPlay: secondUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-
-                                fourthDealerPlay: fourthDealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                                thirdDealerCard: thirdDealerCard,
-                                fourthDealerCard: fourthDealerCard,
-                                fifthDealerCard: fifthDealerCard
-                            });
-                            break;
-                        }
-                        if (fourthDealerPlay == secondUserPlay) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                draw: true,
-                                secondUserPlay: secondUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-
-                                fourthDealerPlay: fourthDealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                                thirdDealerCard: thirdDealerCard,
-                                fourthDealerCard: fourthDealerCard,
-                                fifthDealerCard: fifthDealerCard
-                            });
-                            break;
-                        }
-                        if (fourthDealerPlay > 21) {
-                            drawPlay({
-                                interaction: buttonInteraction,
-                                userWin: true,
-                                secondUserPlay: secondUserPlay,
-                                firstPlayerCard: firstUserCard,
-                                secondPlayerCard: secondUserCard,
-                                thirdPlayerCard: thirdUserCard,
-
-                                fourthDealerPlay: fourthDealerPlay,
-                                firstDealerCard: firstDealerCard,
-                                secondDealerCard: secondDealerCard,
-                                thirdDealerCard: thirdDealerCard,
-                                fourthDealerCard: fourthDealerCard,
-                                fifthDealerCard: fifthDealerCard
-                            });
-                            break;
-                        }
-                        drawPlay({
-                            interaction: buttonInteraction,
-                            userWin: true,
-                            secondUserPlay: secondUserPlay,
-                            firstPlayerCard: firstUserCard,
-                            secondPlayerCard: secondUserCard,
-                            thirdPlayerCard: thirdUserCard,
-
-                            fourthDealerPlay: fourthDealerPlay,
-                            firstDealerCard: firstDealerCard,
-                            secondDealerCard: secondDealerCard,
-                            thirdDealerCard: thirdDealerCard,
-                            fourthDealerCard: fourthDealerCard,
-                            fifthDealerCard: fifthDealerCard
-                        });
-                        break;
-                    }
-                    // aqui o dealer vai ganhar de primeira jogada
-                    if (dealerPlay > userPlay && dealerPlay <= 21) {
-                        drawPlay({
-                            interaction: buttonInteraction,
-                            userWin: false,
-                            userPlay: userPlay,
-                            firstPlayerCard: firstUserCard,
-                            secondPlayerCard: secondUserCard,
-                            dealerPlay: dealerPlay,
-                            firstDealerCard: firstDealerCard,
-                            secondDealerCard: secondDealerCard
-                        });
-                        break;
-                    }
-                    if (dealerPlay == userPlay) {
-                        drawPlay({
-                            interaction: buttonInteraction,
-                            draw: true,
-                            userPlay: userPlay,
-                            firstPlayerCard: firstUserCard,
-                            secondPlayerCard: secondUserCard,
-                            dealerPlay: dealerPlay,
-                            firstDealerCard: firstDealerCard,
-                            secondDealerCard: secondDealerCard
-                        });
-                        break;
-                    }
-                    if (secondDealerPlay > userPlay && secondDealerPlay <= 21) {
-                        drawPlay({
-                            interaction: buttonInteraction,
-                            userWin: false,
-                            userPlay: userPlay,
-                            firstPlayerCard: firstUserCard,
-                            secondPlayerCard: secondUserCard,
-                            secondDealerPlay: secondDealerPlay,
-                            firstDealerCard: firstDealerCard,
-                            secondDealerCard: secondDealerCard,
-                            thirdDealerCard: thirdDealerCard
-                        });
-                        break;
-                    }
-                    if (secondDealerPlay == userPlay) {
-                        drawPlay({
-                            interaction: buttonInteraction,
-                            draw: true,
-                            userPlay: userPlay,
-                            firstPlayerCard: firstUserCard,
-                            secondPlayerCard: secondUserCard,
-                            secondDealerPlay: secondDealerPlay,
-                            firstDealerCard: firstDealerCard,
-                            secondDealerCard: secondDealerCard,
-                            thirdDealerCard: thirdDealerCard
-                        });
-                        break;
-                    }
-                    if (secondDealerPlay > 21) {
-                        drawPlay({
-                            interaction: buttonInteraction,
-                            userWin: true,
-                            userPlay: userPlay,
-                            firstPlayerCard: firstUserCard,
-                            secondPlayerCard: secondUserCard,
-                            secondDealerPlay: secondDealerPlay,
-                            firstDealerCard: firstDealerCard,
-                            secondDealerCard: secondDealerCard,
-                            thirdDealerCard: thirdDealerCard
-                        });
-                        break;
-                    }
-                    if (thirdDealerPlay > userPlay && thirdDealerPlay <= 21) {
-                        drawPlay({
-                            interaction: buttonInteraction,
-                            userWin: false,
-                            userPlay: userPlay,
-                            firstPlayerCard: firstUserCard,
-                            secondPlayerCard: secondUserCard,
-
-                            secondDealerPlay: thirdDealerPlay,
-                            firstDealerCard: firstDealerCard,
-                            secondDealerCard: secondDealerCard,
-                            thirdDealerCard: thirdDealerCard,
-                            fourthDealerCard: fourthDealerCard
-                        });
-                        break;
-                    }
-                    if (thirdDealerPlay == userPlay) {
-                        drawPlay({
-                            interaction: buttonInteraction,
-                            draw: true,
-                            userPlay: userPlay,
-                            firstPlayerCard: firstUserCard,
-                            secondPlayerCard: secondUserCard,
-
-                            secondDealerPlay: thirdDealerPlay,
-                            firstDealerCard: firstDealerCard,
-                            secondDealerCard: secondDealerCard,
-                            thirdDealerCard: thirdDealerCard,
-                            fourthDealerCard: fourthDealerCard
-                        });
-                        break;
-                    }
-                    if (thirdDealerPlay > 21) {
-                        drawPlay({
-                            interaction: buttonInteraction,
-                            userWin: true,
-                            userPlay: userPlay,
-                            firstPlayerCard: firstUserCard,
-                            secondPlayerCard: secondUserCard,
-
-                            secondDealerPlay: thirdDealerPlay,
-                            firstDealerCard: firstDealerCard,
-                            secondDealerCard: secondDealerCard,
-                            thirdDealerCard: thirdDealerCard,
-                            fourthDealerCard: fourthDealerCard
-                        });
-                        break;
-                    }
-                    if (fourthDealerPlay > userPlay && fourthDealerPlay <= 21) {
-                        drawPlay({
-                            interaction: buttonInteraction,
-                            userWin: false,
-                            userPlay: userPlay,
-                            firstPlayerCard: firstUserCard,
-                            secondPlayerCard: secondUserCard,
-
-                            fourthDealerPlay: fourthDealerPlay,
-                            firstDealerCard: firstDealerCard,
-                            secondDealerCard: secondDealerCard,
-                            thirdDealerCard: thirdDealerCard,
-                            fourthDealerCard: fourthDealerCard,
-                            fifthDealerCard: fifthDealerCard
-                        });
-                        break;
-                    }
-                    if (fourthDealerPlay == userPlay) {
-                        drawPlay({
-                            interaction: buttonInteraction,
-                            draw: true,
-                            userPlay: userPlay,
-                            firstPlayerCard: firstUserCard,
-                            secondPlayerCard: secondUserCard,
-
-                            fourthDealerPlay: fourthDealerPlay,
-                            firstDealerCard: firstDealerCard,
-                            secondDealerCard: secondDealerCard,
-                            thirdDealerCard: thirdDealerCard,
-                            fourthDealerCard: fourthDealerCard,
-                            fifthDealerCard: fifthDealerCard
-                        });
-                        break;
-                    }
-                    if (fourthDealerPlay > 21) {
-                        drawPlay({
-                            interaction: buttonInteraction,
-                            userWin: true,
-                            userPlay: userPlay,
-                            firstPlayerCard: firstUserCard,
-                            secondPlayerCard: secondUserCard,
-
-                            fourthDealerPlay: fourthDealerPlay,
-                            firstDealerCard: firstDealerCard,
-                            secondDealerCard: secondDealerCard,
-                            thirdDealerCard: thirdDealerCard,
-                            fourthDealerCard: fourthDealerCard,
-                            fifthDealerCard: fifthDealerCard
-                        });
-                        break;
-                    }
-                    drawPlay({
-                        interaction: buttonInteraction,
-                        userWin: true,
-                        userPlay: userPlay,
-                        firstPlayerCard: firstUserCard,
-                        secondPlayerCard: secondUserCard,
-
-                        fourthDealerPlay: fourthDealerPlay,
-                        firstDealerCard: firstDealerCard,
-                        secondDealerCard: secondDealerCard,
-                        thirdDealerCard: thirdDealerCard,
-                        fourthDealerCard: fourthDealerCard,
-                        fifthDealerCard: fifthDealerCard
-                    });
+                    await handleStand(buttonInteraction);
                     break;
                 case 'double':
                     buttonInteraction.update({ content: "clicou no double" });
