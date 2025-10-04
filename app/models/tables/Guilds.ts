@@ -1,16 +1,18 @@
 import { DataTypes, Model, Sequelize } from "sequelize";
 
-interface CardsAttributes {
+interface GuildsAttributes {
     id?: string;
     welcome_channel_id?: string;
     name: string;
     ownerId: string;
+    games_channel_id?: string;
+    games_online_channel_id?: string;
 }
 
-export interface CardsInstance extends Model<CardsAttributes>, CardsAttributes {}
+export interface GuildsInstance extends Model<GuildsAttributes>, GuildsAttributes {}
 
-export default function Cards(sequelize: Sequelize) {
-    const Guilds = sequelize.define<CardsInstance>("guilds", {
+export default function Guilds(sequelize: Sequelize) {
+    const Guilds = sequelize.define<GuildsInstance>("guilds", {
         id: {
             type: DataTypes.STRING,
             primaryKey: true
@@ -24,6 +26,14 @@ export default function Cards(sequelize: Sequelize) {
         },
         ownerId: {
             type: DataTypes.STRING
+        },
+        games_channel_id: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        games_online_channel_id: {
+            type: DataTypes.STRING,
+            allowNull: true
         }
     });
     return Guilds;

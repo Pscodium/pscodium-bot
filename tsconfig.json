@@ -23,5 +23,5 @@
       "importHelpers": true,
       "experimentalDecorators": true
     },
-    "include": ["app", "api"]
+    "include": ["app", "api", "app/structs/types/*.d.ts"],
 }
