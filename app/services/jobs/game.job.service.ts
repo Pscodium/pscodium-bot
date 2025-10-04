@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Game, IGDBGame } from "./types/game";
 import { appConfig } from "../../config/app.config";
+import game from "../../commands/common/game";
 
 export class GameJobService {
 
@@ -12,11 +14,27 @@ export class GameJobService {
                 'Content-Type': 'application/json'
             };
 
-            const maxOffset = 10000;
-            const randomOffset = Math.floor(Math.random() * maxOffset);
-
-            const gameQuery = `fields name, summary, cover.url, genres.name, platforms.name, rating, rating_count, first_release_date, screenshots.url, game_modes.name, multiplayer_modes.*; where rating > 30 & rating_count > 5; limit 1; offset ${randomOffset};`;
+            let gameQuery = `fields name, summary, cover.url, genres.name, platforms.name, 
+                    rating, rating_count, first_release_date, screenshots.url, 
+                    game_modes.name, multiplayer_modes.*; 
+                where 
+                    rating > 30 & 
+                    rating_count > 5; 
+                limit 1;`;
             
+            const totalGames: any = await fetch('https://api.igdb.com/v4/games/count', {
+                method: 'POST', headers, body: gameQuery
+            }).then(r => r.json());
+
+            if (!totalGames || totalGames.count === 0) {
+                console.log('⚠️ Nenhum jogo multiplayer encontrado na IGDB');
+                return null;
+            }
+
+            const randomOffset = Math.floor(Math.random() * totalGames.count);
+
+            gameQuery += ` offset ${randomOffset};`;
+
             const gameResponse = await fetch('https://api.igdb.com/v4/games', {
                 method: 'POST',
                 headers,
@@ -52,10 +70,28 @@ export class GameJobService {
                 'Content-Type': 'application/json'
             };
 
-            const maxOffset = 5000;
-            const randomOffset = Math.floor(Math.random() * maxOffset);
+            let gameQuery = `fields
+                    name, summary, cover.url, genres.name, platforms.name,
+                    rating, rating_count, first_release_date, screenshots.url,
+                    game_modes.name, multiplayer_modes.*;
+                where
+                    rating > 30 &
+                    rating_count > 5 &
+                    game_modes = (2, 3, 4, 5);
+                limit 1; `;
 
-            const gameQuery = `fields name, summary, cover.url, genres.name, platforms.name, rating, rating_count, first_release_date, screenshots.url, game_modes.name, multiplayer_modes.*; where rating > 30 & rating_count > 5 & (game_modes != null | multiplayer_modes != null); limit 1; offset ${randomOffset};`;
+            const totalGames: any = await fetch('https://api.igdb.com/v4/games/count', {
+                method: 'POST', headers, body: gameQuery
+            }).then(r => r.json());
+
+            if (!totalGames || totalGames.count === 0) {
+                console.log('⚠️ Nenhum jogo multiplayer encontrado na IGDB');
+                return null;
+            }
+
+            const randomOffset = Math.floor(Math.random() * totalGames.count);
+
+            gameQuery += ` offset ${randomOffset};`;
             
             const gameResponse = await fetch('https://api.igdb.com/v4/games', {
                 method: 'POST',
