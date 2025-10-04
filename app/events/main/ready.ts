@@ -1,4 +1,5 @@
 import { client } from "../..";
+import { JobService } from "../../services/jobs";
 import { Event } from "../../structs/types/Event";
 
 export default new Event({
@@ -14,5 +15,7 @@ export default new Event({
         console.log(`Selects loaded: ${selects.size}`.cyan);
         console.log(`Modals loaded: ${modals.size}`.cyan);
 
+        const jobService = new JobService();
+        jobService.start(client);
     }
 });
