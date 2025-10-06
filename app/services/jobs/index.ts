@@ -31,13 +31,14 @@ export class JobService {
             console.log(`⏰ Emitindo evento gameQueueJob às ${timestamp.toLocaleTimeString()}`);
             const guilds = client.guilds.cache;
         
-            const [game, onlineGame, freeGame] = await this.fetchGamesWithDelay(gameJobService, [
+            const [game, onlineGame, freeGame, managementGame] = await this.fetchGamesWithDelay(gameJobService, [
                 'normal' as GameRequestTypeEnum,
                 'multiplayer' as GameRequestTypeEnum, 
-                'free' as GameRequestTypeEnum
+                'free' as GameRequestTypeEnum,
+                'management' as GameRequestTypeEnum
             ]);
 
-            if (!game || !onlineGame || !freeGame) {
+            if (!game || !onlineGame || !freeGame || !managementGame) {
                 console.log('⚠️ Nenhum jogo encontrado na IGDB');
                 return;
             }
@@ -46,12 +47,14 @@ export class JobService {
             const gameChannelIds = await guildsService.getGameChannelByGuildIds(guildIds);
             const onlineGameChannelIds = await guildsService.getOnlineGameChannelByGuildIds(guildIds);
             const freeGameChannelIds = await guildsService.getFreeGameChannelByGuildIds(guildIds);
+            const managementGameChannelIds = await guildsService.getManagementGameChannelByGuildIds(guildIds);
 
             if (gameChannelIds.length !== 0 && onlineGameChannelIds.length !== 0) {
                 console.log(`✅ MENSAGENS ENVIADAS:\nCanais de Jogos: ${gameChannelIds.length} \nCanais de jogos online: ${onlineGameChannelIds.length} \nCanais de jogos gratuitos: ${freeGameChannelIds.length}`);
                 client.emit('gameQueueJob', { client, channelIds: gameChannelIds, game });
                 client.emit('gameQueueJob', { client, channelIds: onlineGameChannelIds, game: onlineGame });
                 client.emit('gameQueueJob', { client, channelIds: freeGameChannelIds, game: freeGame });
+                client.emit('gameQueueJob', { client, channelIds: managementGameChannelIds, game: managementGame });
                 return;
             }
             

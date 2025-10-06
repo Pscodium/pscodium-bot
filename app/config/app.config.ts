@@ -19,5 +19,8 @@ export const appConfig = {
     gameMultiplayerCronJobQuery: process.env.GAME_MULTIPLAYER_QUERY || "",
 
     gameFreeCronJobConfig: process.env.GAME_FREE_CRON_JOB_CONFIG || "",
-    gameFreeCronJobQuery: process.env.GAME_FREE_QUERY || ""
+    gameFreeCronJobQuery: process.env.GAME_FREE_QUERY || "",
+
+    gameManagementCronJobConfig: process.env.GAME_MANAGEMENT_CRON_JOB_CONFIG || "",
+    gameManagementCronJobQuery: process.env.GAME_MANAGEMENT_QUERY || ""
 };

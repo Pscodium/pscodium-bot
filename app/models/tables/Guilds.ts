@@ -8,6 +8,7 @@ interface GuildsAttributes {
     games_channel_id?: string;
     games_online_channel_id?: string;
     games_free_channel_id?: string;
+    games_management_channel_id?: string;
 }
 
 export interface GuildsInstance extends Model<GuildsAttributes>, GuildsAttributes {}
@@ -37,6 +38,10 @@ export default function Guilds(sequelize: Sequelize) {
             allowNull: true
         },
         games_free_channel_id: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        games_management_channel_id: {
             type: DataTypes.STRING,
             allowNull: true
         }

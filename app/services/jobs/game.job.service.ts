@@ -71,14 +71,18 @@ export class GameJobService {
         const gameCronJobConfig = JSON.parse(appConfig.gameCronJobConfig);
         const gameMultiplayerCronJobConfig = JSON.parse(appConfig.gameMultiplayerCronJobConfig);
         const gameFreeCronJobConfig = JSON.parse(appConfig.gameFreeCronJobConfig);
+        const gameManagementCronJobConfig = JSON.parse(appConfig.gameManagementCronJobConfig);
 
         gameCronJobConfig.query = appConfig.gameCronJobQuery;
         gameMultiplayerCronJobConfig.query = appConfig.gameMultiplayerCronJobQuery;
         gameFreeCronJobConfig.query = appConfig.gameFreeCronJobQuery;
+        gameManagementCronJobConfig.query = appConfig.gameManagementCronJobQuery;
+
 
         config.push(gameCronJobConfig);
         config.push(gameMultiplayerCronJobConfig);
         config.push(gameFreeCronJobConfig);
+        config.push(gameManagementCronJobConfig);
 
         return config;
     }
