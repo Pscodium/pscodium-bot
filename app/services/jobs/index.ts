@@ -3,8 +3,24 @@ import { ExtendedClient } from '../../structs/ExtendedClient';
 import { GameJobService } from './game.job.service';
 import guildsService from '../guilds.service';
 import { appConfig } from '../../config/app.config';
+import { GameRequestTypeEnum } from './types/gameRequestTypeEnum';
 
 export class JobService {
+    
+    private async fetchGamesWithDelay(gameJobService: GameJobService, gameTypes: GameRequestTypeEnum[], delayMs = 600) {
+        const games = [];
+        
+        for (let i = 0; i < gameTypes.length; i++) {
+            const game = await gameJobService.getRandomGameForEmbed(gameTypes[i]);
+            games.push(game);
+            
+            if (i < gameTypes.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, delayMs));
+            }
+        }
+        
+        return games;
+    }
     
     async start(client: ExtendedClient) {
         const gameJobService = new GameJobService();
@@ -15,10 +31,13 @@ export class JobService {
             console.log(`⏰ Emitindo evento gameQueueJob às ${timestamp.toLocaleTimeString()}`);
             const guilds = client.guilds.cache;
         
-            const game = await gameJobService.getRandomGameForEmbed();
-            const onlineGame = await gameJobService.getRandomMultiplayerGameForEmbed();
+            const [game, onlineGame, freeGame] = await this.fetchGamesWithDelay(gameJobService, [
+                'normal' as GameRequestTypeEnum,
+                'multiplayer' as GameRequestTypeEnum, 
+                'free' as GameRequestTypeEnum
+            ]);
 
-            if (!game || !onlineGame) {
+            if (!game || !onlineGame || !freeGame) {
                 console.log('⚠️ Nenhum jogo encontrado na IGDB');
                 return;
             }
@@ -26,11 +45,13 @@ export class JobService {
             const guildIds = guilds.map(guild => guild.id);
             const gameChannelIds = await guildsService.getGameChannelByGuildIds(guildIds);
             const onlineGameChannelIds = await guildsService.getOnlineGameChannelByGuildIds(guildIds);
+            const freeGameChannelIds = await guildsService.getFreeGameChannelByGuildIds(guildIds);
 
             if (gameChannelIds.length !== 0 && onlineGameChannelIds.length !== 0) {
-                console.log(`✅ MENSAGENS ENVIADAS:\nCanais de Jogos: ${gameChannelIds.length} \nCanais de jogos online: ${onlineGameChannelIds.length}`);
+                console.log(`✅ MENSAGENS ENVIADAS:\nCanais de Jogos: ${gameChannelIds.length} \nCanais de jogos online: ${onlineGameChannelIds.length} \nCanais de jogos gratuitos: ${freeGameChannelIds.length}`);
                 client.emit('gameQueueJob', { client, channelIds: gameChannelIds, game });
                 client.emit('gameQueueJob', { client, channelIds: onlineGameChannelIds, game: onlineGame });
+                client.emit('gameQueueJob', { client, channelIds: freeGameChannelIds, game: freeGame });
                 return;
             }
             

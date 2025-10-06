@@ -1,26 +1,31 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Game, IGDBGame } from "./types/game";
+import { IGDBGame } from "./types/game";
+import { GameDTO } from "./dto/GameDTO";
 import { appConfig } from "../../config/app.config";
-import game from "../../commands/common/game";
+import { GameRequestTypeEnum } from "./types/gameRequestTypeEnum";
+import { CronConfig } from "./types/cronConfig";
 
 export class GameJobService {
 
-    async getRandomGame(): Promise<IGDBGame | null> {
+    async getRandomGame(type: GameRequestTypeEnum): Promise<IGDBGame | null> {
         try {
-            console.log(`🎮 Processando fila de jogos às ${new Date().toLocaleTimeString()}`);
+            const config = this.parseConfigToJson().find(c => c.type === type);
+
+            // console.log('config =>', config);
+
+            if (!config) {
+                console.error(`❌ Configuração de cron para o tipo '${type}' não encontrada.`);
+                return null;
+            }
+
+            console.log(config.processing_message, new Date().toLocaleTimeString());
             const headers = {
                 "Client-ID": appConfig.igdb.clientId,
                 Authorization: `Bearer ${appConfig.igdb.bearerToken}`,
                 'Content-Type': 'application/json'
             };
 
-            let gameQuery = `fields name, summary, cover.url, genres.name, platforms.name, 
-                    rating, rating_count, first_release_date, screenshots.url, 
-                    game_modes.name, multiplayer_modes.*; 
-                where 
-                    rating > 30 & 
-                    rating_count > 5; 
-                limit 1;`;
+            let gameQuery = config.query;
             
             const totalGames: any = await fetch('https://api.igdb.com/v4/games/count', {
                 method: 'POST', headers, body: gameQuery
@@ -61,62 +66,21 @@ export class GameJobService {
         }
     }
 
-    async getRandomMultiplayerGame(): Promise<IGDBGame | null> {
-        try {
-            console.log(`🎮 Processando fila de jogos multiplayer às ${new Date().toLocaleTimeString()}`);
-            const headers = {
-                "Client-ID": appConfig.igdb.clientId,
-                Authorization: `Bearer ${appConfig.igdb.bearerToken}`,
-                'Content-Type': 'application/json'
-            };
+    parseConfigToJson(): CronConfig[] {
+        const config: CronConfig[] = [];
+        const gameCronJobConfig = JSON.parse(appConfig.gameCronJobConfig);
+        const gameMultiplayerCronJobConfig = JSON.parse(appConfig.gameMultiplayerCronJobConfig);
+        const gameFreeCronJobConfig = JSON.parse(appConfig.gameFreeCronJobConfig);
 
-            let gameQuery = `fields
-                    name, summary, cover.url, genres.name, platforms.name,
-                    rating, rating_count, first_release_date, screenshots.url,
-                    game_modes.name, multiplayer_modes.*;
-                where
-                    rating > 30 &
-                    rating_count > 5 &
-                    game_modes = (2, 3, 4, 5);
-                limit 1; `;
+        gameCronJobConfig.query = appConfig.gameCronJobQuery;
+        gameMultiplayerCronJobConfig.query = appConfig.gameMultiplayerCronJobQuery;
+        gameFreeCronJobConfig.query = appConfig.gameFreeCronJobQuery;
 
-            const totalGames: any = await fetch('https://api.igdb.com/v4/games/count', {
-                method: 'POST', headers, body: gameQuery
-            }).then(r => r.json());
+        config.push(gameCronJobConfig);
+        config.push(gameMultiplayerCronJobConfig);
+        config.push(gameFreeCronJobConfig);
 
-            if (!totalGames || totalGames.count === 0) {
-                console.log('⚠️ Nenhum jogo multiplayer encontrado na IGDB');
-                return null;
-            }
-
-            const randomOffset = Math.floor(Math.random() * totalGames.count);
-
-            gameQuery += ` offset ${randomOffset};`;
-            
-            const gameResponse = await fetch('https://api.igdb.com/v4/games', {
-                method: 'POST',
-                headers,
-                body: gameQuery
-            });
-            
-            if (!gameResponse.ok) {
-                throw new Error(`IGDB Games API error: ${gameResponse.statusText}`);
-            }
-            
-            const gameData = await gameResponse.json() as IGDBGame[];
-            
-            if (!gameData || gameData.length === 0) {
-                console.log('⚠️ Nenhum jogo multiplayer retornado da IGDB');
-                return null;
-            }
-
-            console.log(`✅ Jogo multiplayer encontrado: ${gameData[0].name}`);
-            return gameData[0];
-            
-        } catch (error) {
-            console.error('❌ Erro ao buscar jogo multiplayer da IGDB:', error);
-            return null;
-        }
+        return config;
     }
 
     private formatReleaseDate(timestamp?: number): string {
@@ -135,6 +99,61 @@ export class GameJobService {
         
         const cleanUrl = url.replace('t_thumb', `t_${size}`);
         return `https:${cleanUrl}`;
+    }
+
+    async getRandomGameForEmbed(type: GameRequestTypeEnum): Promise<GameDTO | null> {
+        const game = await this.getRandomGame(type);
+        
+        if (!game) return null;
+
+        const gameModes = game.game_modes?.map(gm => gm.name) || [];
+        const multiplayerModes = game.multiplayer_modes || [];
+        
+        const isMultiplayer = gameModes.some(mode => 
+            mode.toLowerCase().includes('multiplayer') || 
+            mode.toLowerCase().includes('multi-player')
+        ) || multiplayerModes.length > 0;
+        
+        const isOnline = multiplayerModes.some(mm => 
+            mm.onlinemax && mm.onlinemax > 1
+        );
+        
+        const isCoop = multiplayerModes.some(mm => 
+            mm.onlinecoop || 
+            mm.campaigncoop || 
+            mm.splitscreencoop || 
+            mm.lancoop
+        );
+
+        let multiplayerInfo = "Solo";
+        if (isMultiplayer) {
+            const maxOnline = Math.max(...multiplayerModes.map(mm => mm.onlinemax || 0));
+            const maxCoopOnline = Math.max(...multiplayerModes.map(mm => mm.onlinecoopmax || 0));
+            
+            const parts = [];
+            if (maxOnline > 1) parts.push(`Online: até ${maxOnline} jogadores`);
+            if (maxCoopOnline > 1) parts.push(`Co-op: até ${maxCoopOnline} jogadores`);
+            if (multiplayerModes.some(mm => mm.splitscreen)) parts.push("Tela dividida");
+            if (multiplayerModes.some(mm => mm.lancoop)) parts.push("LAN Co-op");
+            
+            multiplayerInfo = parts.length > 0 ? parts.join(' • ') : "Multiplayer disponível";
+        }
+
+        return {
+            name: game.name,
+            summary: game.summary || "Descrição não disponível.",
+            coverImage: this.formatImageUrl(game.cover?.url, 'cover_big'),
+            backgroundImage: this.formatImageUrl(game.screenshots?.[0]?.url || game.cover?.url, 'screenshot_huge'),
+            genres: game.genres?.map(g => g.name).join(', ') || "Não especificado",
+            platforms: game.platforms?.slice(0, 5).map(p => p.name).join(', ') || "Não especificado",
+            rating: game.rating ? Math.round((game.rating / 10) * 10) / 10 : 0,
+            releaseDate: this.formatReleaseDate(game.first_release_date),
+            igdbUrl: `https://www.igdb.com/games/${game.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`,
+            isOnline,
+            isMultiplayer,
+            isCoop,
+            multiplayerInfo
+        };
     }
 
     async analyzeGameDatabase(): Promise<{
@@ -282,113 +301,4 @@ export class GameJobService {
         }
     }
 
-    async getRandomGameForEmbed(): Promise<Game | null> {
-        const game = await this.getRandomGame();
-        
-        if (!game) return null;
-
-        const gameModes = game.game_modes?.map(gm => gm.name) || [];
-        const multiplayerModes = game.multiplayer_modes || [];
-        
-        const isMultiplayer = gameModes.some(mode => 
-            mode.toLowerCase().includes('multiplayer') || 
-            mode.toLowerCase().includes('multi-player')
-        ) || multiplayerModes.length > 0;
-        
-        const isOnline = multiplayerModes.some(mm => 
-            mm.onlinemax && mm.onlinemax > 1
-        );
-        
-        const isCoop = multiplayerModes.some(mm => 
-            mm.onlinecoop || 
-            mm.campaigncoop || 
-            mm.splitscreencoop || 
-            mm.lancoop
-        );
-
-        let multiplayerInfo = "Solo";
-        if (isMultiplayer) {
-            const maxOnline = Math.max(...multiplayerModes.map(mm => mm.onlinemax || 0));
-            const maxCoopOnline = Math.max(...multiplayerModes.map(mm => mm.onlinecoopmax || 0));
-            
-            const parts = [];
-            if (maxOnline > 1) parts.push(`Online: até ${maxOnline} jogadores`);
-            if (maxCoopOnline > 1) parts.push(`Co-op: até ${maxCoopOnline} jogadores`);
-            if (multiplayerModes.some(mm => mm.splitscreen)) parts.push("Tela dividida");
-            if (multiplayerModes.some(mm => mm.lancoop)) parts.push("LAN Co-op");
-            
-            multiplayerInfo = parts.length > 0 ? parts.join(' • ') : "Multiplayer disponível";
-        }
-
-        return {
-            name: game.name,
-            summary: game.summary || "Descrição não disponível.",
-            coverImage: this.formatImageUrl(game.cover?.url, 'cover_big'),
-            backgroundImage: this.formatImageUrl(game.screenshots?.[0]?.url || game.cover?.url, 'screenshot_huge'),
-            genres: game.genres?.map(g => g.name).join(', ') || "Não especificado",
-            platforms: game.platforms?.slice(0, 5).map(p => p.name).join(', ') || "Não especificado",
-            rating: game.rating ? Math.round((game.rating / 10) * 10) / 10 : 0,
-            releaseDate: this.formatReleaseDate(game.first_release_date),
-            igdbUrl: `https://www.igdb.com/games/${game.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`,
-            isOnline,
-            isMultiplayer,
-            isCoop,
-            multiplayerInfo
-        };
-    }
-
-    async getRandomMultiplayerGameForEmbed(): Promise<Game | null> {
-        const game = await this.getRandomMultiplayerGame();
-        
-        if (!game) return null;
-
-        const gameModes = game.game_modes?.map(gm => gm.name) || [];
-        const multiplayerModes = game.multiplayer_modes || [];
-        
-        const isMultiplayer = gameModes.some(mode => 
-            mode.toLowerCase().includes('multiplayer') || 
-            mode.toLowerCase().includes('multi-player')
-        ) || multiplayerModes.length > 0;
-        
-        const isOnline = multiplayerModes.some(mm => 
-            mm.onlinemax && mm.onlinemax > 1
-        );
-        
-        const isCoop = multiplayerModes.some(mm => 
-            mm.onlinecoop || 
-            mm.campaigncoop || 
-            mm.splitscreencoop || 
-            mm.lancoop
-        );
-
-        let multiplayerInfo = "Solo";
-        if (isMultiplayer || isOnline || isCoop) {
-            const maxOnline = Math.max(...multiplayerModes.map(mm => mm.onlinemax || 0));
-            const maxCoopOnline = Math.max(...multiplayerModes.map(mm => mm.onlinecoopmax || 0));
-            
-            const parts = [];
-            if (maxOnline > 1) parts.push(`Online: até ${maxOnline} jogadores`);
-            if (maxCoopOnline > 1) parts.push(`Co-op: até ${maxCoopOnline} jogadores`);
-            if (multiplayerModes.some(mm => mm.splitscreen)) parts.push("Tela dividida");
-            if (multiplayerModes.some(mm => mm.lancoop)) parts.push("LAN Co-op");
-            
-            multiplayerInfo = parts.length > 0 ? parts.join(' • ') : "Multiplayer disponível";
-        }
-
-        return {
-            name: game.name,
-            summary: game.summary || "Descrição não disponível.",
-            coverImage: this.formatImageUrl(game.cover?.url, 'cover_big'),
-            backgroundImage: this.formatImageUrl(game.screenshots?.[0]?.url || game.cover?.url, 'screenshot_huge'),
-            genres: game.genres?.map(g => g.name).join(', ') || "Não especificado",
-            platforms: game.platforms?.slice(0, 5).map(p => p.name).join(', ') || "Não especificado",
-            rating: game.rating ? Math.round((game.rating / 10) * 10) / 10 : 0,
-            releaseDate: this.formatReleaseDate(game.first_release_date),
-            igdbUrl: `https://www.igdb.com/games/${game.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`,
-            isOnline,
-            isMultiplayer,
-            isCoop,
-            multiplayerInfo
-        };
-    }
 }
