@@ -89,6 +89,25 @@ class GuildsService extends DefaultService {
 
         return channelIds;
     }
+
+    async getManagementGameChannelByGuildIds(guildIds: string[]): Promise<string[]> {
+        const guilds = await this.db.Guilds.findAll({
+            where: {
+                id: guildIds
+            },
+            attributes: ['games_management_channel_id']
+        });
+
+        if (!guilds) {
+            return [];
+        }
+
+        const channelIds = guilds
+            .filter((guild) => guild.games_free_channel_id !== null && guild.games_free_channel_id !== undefined)
+            .map((guild) => guild.games_free_channel_id as string);
+
+        return channelIds;
+    }
 }
 
 export default new GuildsService();
