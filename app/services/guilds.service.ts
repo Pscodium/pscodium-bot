@@ -103,8 +103,8 @@ class GuildsService extends DefaultService {
         }
 
         const channelIds = guilds
-            .filter((guild) => guild.games_free_channel_id !== null && guild.games_free_channel_id !== undefined)
-            .map((guild) => guild.games_free_channel_id as string);
+            .filter((guild) => guild.games_management_channel_id !== null && guild.games_management_channel_id !== undefined)
+            .map((guild) => guild.games_management_channel_id as string);
 
         return channelIds;
     }

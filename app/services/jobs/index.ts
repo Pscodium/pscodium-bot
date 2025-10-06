@@ -50,7 +50,11 @@ export class JobService {
             const managementGameChannelIds = await guildsService.getManagementGameChannelByGuildIds(guildIds);
 
             if (gameChannelIds.length !== 0 && onlineGameChannelIds.length !== 0) {
-                console.log(`✅ MENSAGENS ENVIADAS:\nCanais de Jogos: ${gameChannelIds.length} \nCanais de jogos online: ${onlineGameChannelIds.length} \nCanais de jogos gratuitos: ${freeGameChannelIds.length}`);
+                console.log(`✅ MENSAGENS ENVIADAS:
+                    \nCanais de Jogos: ${gameChannelIds.length} 
+                    \nCanais de jogos online: ${onlineGameChannelIds.length} 
+                    \nCanais de jogos gratuitos: ${freeGameChannelIds.length}
+                    \nCanais de jogos de gerenciamento: ${managementGameChannelIds.length}`);
                 client.emit('gameQueueJob', { client, channelIds: gameChannelIds, game });
                 client.emit('gameQueueJob', { client, channelIds: onlineGameChannelIds, game: onlineGame });
                 client.emit('gameQueueJob', { client, channelIds: freeGameChannelIds, game: freeGame });
