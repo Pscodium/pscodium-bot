@@ -22,4 +22,4 @@ export function loadConfig(filePath: string): ExternalConfig {
     return data;
 }
 
-export const externalConfig = loadConfig(__dirname + (process.env.NODE_ENV === 'production' ? '\\..\\..\\config\\config.yml' : '/config.yml'));
+export const externalConfig = loadConfig(__dirname + (process.env.NODE_ENV === 'production' ? '/../../config/config.yml' : '/config.yml'));
