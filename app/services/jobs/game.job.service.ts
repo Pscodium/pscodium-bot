@@ -18,7 +18,9 @@ export class GameJobService {
                 return null;
             }
 
-            console.log(config.processing_message, new Date().toLocaleTimeString());
+            console.log(config.processing_message, new Date().toLocaleTimeString(
+                'pt-BR', { timeZone: 'America/Sao_Paulo', hour12: false }
+            ));
             const headers = {
                 "Client-ID": appConfig.igdb.clientId,
                 Authorization: `Bearer ${appConfig.igdb.bearerToken}`,
