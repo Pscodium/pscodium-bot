@@ -1,0 +1,43 @@
+
+
+jobs:
+  game_queue_job:
+    normal:
+      cron: "*/5 * * * *"
+      type: 'normal'
+      class: "GameQueueJob"
+      queue: "default"
+      query: 'fields name, summary, cover.url, genres.name, platforms.name, rating, rating_count, first_release_date, screenshots.url, game_modes.name, multiplayer_modes.*; where rating > 30 & rating_count > 5; limit 1;'
+      description: "Job para processar a fila de jogos normais."
+      processing_message: "🎮 Processando fila de jogos às"
+      column_name: "games_channel_id"
+    
+    multiplayer:
+      cron: "*/5 * * * *"
+      type: 'multiplayer'
+      class: "GameQueueJob"
+      queue: "default"
+      query: 'fields name, summary, cover.url, genres.name, platforms.name, rating, rating_count, first_release_date, screenshots.url, game_modes.name, multiplayer_modes.*; where rating > 30 & rating_count > 5 & game_modes = (2, 3, 4, 5); limit 1;'
+      description: "Job para processar a fila de jogos multiplayer."
+      processing_message: "🎮 Processando fila de jogos online às"
+      column_name: "games_online_channel_id"
+
+    free:
+      cron: "*/5 * * * *"
+      type: 'free'
+      class: "GameQueueJob"
+      queue: "default"
+      query: 'fields name, summary, cover.url, genres.name, platforms.name, rating, rating_count, first_release_date, screenshots.url, game_modes.name, multiplayer_modes.*; where ( category = 8 | keywords.name ~ *"free"* | keywords.name ~ *"free-to-play"* | keywords.name ~ *"f2p"* | keywords.name ~ *"freemium"* | keywords.name ~ *"browser"* | keywords.name ~ *"demo"* ); limit 1;'
+      description: "Job para processar a fila de jogos gratuitos."
+      processing_message: "🎮 Processando fila de jogos gratuitos às"
+      column_name: "games_free_channel_id"
+
+    management:
+      cron: "*/5 * * * *"
+      type: 'management'
+      class: "GameQueueJob"
+      queue: "default"
+      query: 'fields name, summary, cover.url, genres.name, platforms.name, rating, rating_count, first_release_date, screenshots.url, game_modes.name, multiplayer_modes.*; where rating > 30 & (genres.name ~ *"Simulation"* | genres.name ~ *"Strategy"* | keywords.name ~ *"Management"* | keywords.name ~ *"Automation"* | keywords.name ~ *"Building"* | keywords.name ~ *"Tycoon"*); sort rating desc; limit 10;'
+      description: "Job para processar a fila de jogos de gerenciamento."
+      processing_message: "🎮 Processando fila de jogos de gerenciamento às"
+      column_name: "games_management_channel_id"

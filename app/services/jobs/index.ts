@@ -2,25 +2,9 @@ import cron from 'node-cron';
 import { ExtendedClient } from '../../structs/ExtendedClient';
 import { GameJobService } from './game.job.service';
 import guildsService from '../guilds.service';
-import { appConfig } from '../../config/app.config';
-import { GameRequestTypeEnum } from './types/gameRequestTypeEnum';
+import { appConfig, externalConfig } from '../../config/app.config';
 
 export class JobService {
-    
-    private async fetchGamesWithDelay(gameJobService: GameJobService, gameTypes: GameRequestTypeEnum[], delayMs = 600) {
-        const games = [];
-        
-        for (let i = 0; i < gameTypes.length; i++) {
-            const game = await gameJobService.getRandomGameForEmbed(gameTypes[i]);
-            games.push(game);
-            
-            if (i < gameTypes.length - 1) {
-                await new Promise(resolve => setTimeout(resolve, delayMs));
-            }
-        }
-        
-        return games;
-    }
     
     async start(client: ExtendedClient) {
         const gameJobService = new GameJobService();
@@ -28,44 +12,33 @@ export class JobService {
         
         cron.schedule(appConfig.gameCronJobSchedule,  async () => {
             const timestamp = new Date();
+            const jobConfig = Object.values(externalConfig.jobs.game_queue_job);
             const brazilTime = timestamp.toLocaleTimeString('pt-BR', { 
                 timeZone: 'America/Sao_Paulo',
                 hour12: false 
             });
             console.log(`⏰ Emitindo evento gameQueueJob às ${brazilTime}`);
             const guilds = client.guilds.cache;
-        
-            const [game, onlineGame, freeGame, managementGame] = await this.fetchGamesWithDelay(gameJobService, [
-                'normal' as GameRequestTypeEnum,
-                'multiplayer' as GameRequestTypeEnum, 
-                'free' as GameRequestTypeEnum,
-                'management' as GameRequestTypeEnum
-            ]);
+            const channel_counts: { [key: string]: number } = {};
 
-            if (!game || !onlineGame || !freeGame || !managementGame) {
-                console.log('⚠️ Nenhum jogo encontrado na IGDB');
-                return;
+            for (const job of jobConfig) {
+                const game = await gameJobService.getRandomGameForEmbed(job.type);
+                if (!game) {
+                    console.log(`⚠️ Nenhum jogo encontrado na IGDB para o tipo ${job.type}`);
+                    return;
+                }
+
+                const guildIds = guilds.map(guild => guild.id);
+                const channelIds = await guildsService.getGuildGameJobChannelIds(guildIds, job.column_name);
+
+                channel_counts[job.type] = channelIds.length ?? 0;
+
+                client.emit('gameQueueJob', { client, channelIds: channelIds, game });
+
+                await new Promise(resolve => setTimeout(resolve, 600));
             }
 
-            const guildIds = guilds.map(guild => guild.id);
-            const gameChannelIds = await guildsService.getGameChannelByGuildIds(guildIds);
-            const onlineGameChannelIds = await guildsService.getOnlineGameChannelByGuildIds(guildIds);
-            const freeGameChannelIds = await guildsService.getFreeGameChannelByGuildIds(guildIds);
-            const managementGameChannelIds = await guildsService.getManagementGameChannelByGuildIds(guildIds);
-
-            if (gameChannelIds.length !== 0 && onlineGameChannelIds.length !== 0) {
-                console.log(`✅ MENSAGENS ENVIADAS:
-                    \nCanais de Jogos: ${gameChannelIds.length} 
-                    \nCanais de jogos online: ${onlineGameChannelIds.length} 
-                    \nCanais de jogos gratuitos: ${freeGameChannelIds.length}
-                    \nCanais de jogos de gerenciamento: ${managementGameChannelIds.length}`);
-                client.emit('gameQueueJob', { client, channelIds: gameChannelIds, game });
-                client.emit('gameQueueJob', { client, channelIds: onlineGameChannelIds, game: onlineGame });
-                client.emit('gameQueueJob', { client, channelIds: freeGameChannelIds, game: freeGame });
-                client.emit('gameQueueJob', { client, channelIds: managementGameChannelIds, game: managementGame });
-                return;
-            }
-            
+            console.log(`✅ Evento gameQueueJob emitido para ${Object.values(channel_counts).reduce((a, b) => a + b, 0)} canais em ${Object.keys(channel_counts).length} categorias.\n⚙️ Detalhes:`, channel_counts);
         });
     }
 }

@@ -34,77 +34,21 @@ class GuildsService extends DefaultService {
         return guild?.welcome_channel_id;
     }
 
-    async getGameChannelByGuildIds(guildIds: string[]) {
-        const guilds = await this.db.Guilds.findAll({
+    async getGuildGameJobChannelIds(guildId: string[], column_name: string): Promise<string[]> {
+        const guild = await this.db.Guilds.findAll({
             where: {
-                id: guildIds
+                id: guildId
             },
-            attributes: ['games_channel_id']
+            attributes: [column_name]
         });
-        if (!guilds) {
+
+        if (!guild) {
             return [];
         }
 
-        const channelIds = guilds
-            .filter((guild) => guild.games_channel_id !== null && guild.games_channel_id !== undefined)
-            .map((guild) => guild.games_channel_id as string);
-
-        return channelIds;
-    }
-
-    async getOnlineGameChannelByGuildIds(guildIds: string[]): Promise<string[]> {
-        const guilds = await this.db.Guilds.findAll({
-            where: {
-                id: guildIds
-            },
-            attributes: ['games_online_channel_id']
-        });
-
-        if (!guilds) {
-            return [];
-        }
-
-        const channelIds = guilds
-            .filter((guild) => guild.games_online_channel_id !== null && guild.games_online_channel_id !== undefined)
-            .map((guild) => guild.games_online_channel_id as string);
-
-        return channelIds;
-    }
-
-    async getFreeGameChannelByGuildIds(guildIds: string[]): Promise<string[]> {
-        const guilds = await this.db.Guilds.findAll({
-            where: {
-                id: guildIds
-            },
-            attributes: ['games_free_channel_id']
-        });
-
-        if (!guilds) {
-            return [];
-        }
-
-        const channelIds = guilds
-            .filter((guild) => guild.games_free_channel_id !== null && guild.games_free_channel_id !== undefined)
-            .map((guild) => guild.games_free_channel_id as string);
-
-        return channelIds;
-    }
-
-    async getManagementGameChannelByGuildIds(guildIds: string[]): Promise<string[]> {
-        const guilds = await this.db.Guilds.findAll({
-            where: {
-                id: guildIds
-            },
-            attributes: ['games_management_channel_id']
-        });
-
-        if (!guilds) {
-            return [];
-        }
-
-        const channelIds = guilds
-            .filter((guild) => guild.games_management_channel_id !== null && guild.games_management_channel_id !== undefined)
-            .map((guild) => guild.games_management_channel_id as string);
+        const channelIds = guild
+            .filter(g => g[column_name as keyof typeof g] !== null && g[column_name as keyof typeof g] !== undefined)
+            .map(g => g[column_name as keyof typeof g] as string);
 
         return channelIds;
     }

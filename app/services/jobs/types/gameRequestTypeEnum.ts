@@ -1,1 +1,0 @@
-export type GameRequestTypeEnum = 'normal' | 'multiplayer' | 'free' | 'management';

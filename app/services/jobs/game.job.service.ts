@@ -1,13 +1,13 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { IGDBGame } from "./types/game";
 import { GameDTO } from "./dto/GameDTO";
-import { appConfig } from "../../config/app.config";
-import { GameRequestTypeEnum } from "./types/gameRequestTypeEnum";
-import { CronConfig } from "./types/cronConfig";
+import { appConfig, externalConfig } from "../../config/app.config";
+import { JobConfig } from "../../config/types/config";
 
 export class GameJobService {
 
-    async getRandomGame(type: GameRequestTypeEnum): Promise<IGDBGame | null> {
+    async getRandomGame(type: string): Promise<IGDBGame | null> {
         try {
             const config = this.parseConfigToJson().find(c => c.type === type);
 
@@ -68,23 +68,12 @@ export class GameJobService {
         }
     }
 
-    parseConfigToJson(): CronConfig[] {
-        const config: CronConfig[] = [];
-        const gameCronJobConfig = JSON.parse(appConfig.gameCronJobConfig);
-        const gameMultiplayerCronJobConfig = JSON.parse(appConfig.gameMultiplayerCronJobConfig);
-        const gameFreeCronJobConfig = JSON.parse(appConfig.gameFreeCronJobConfig);
-        const gameManagementCronJobConfig = JSON.parse(appConfig.gameManagementCronJobConfig);
+    parseConfigToJson(): JobConfig[] {
+        const config: JobConfig[] = [];
 
-        gameCronJobConfig.query = appConfig.gameCronJobQuery;
-        gameMultiplayerCronJobConfig.query = appConfig.gameMultiplayerCronJobQuery;
-        gameFreeCronJobConfig.query = appConfig.gameFreeCronJobQuery;
-        gameManagementCronJobConfig.query = appConfig.gameManagementCronJobQuery;
-
-
-        config.push(gameCronJobConfig);
-        config.push(gameMultiplayerCronJobConfig);
-        config.push(gameFreeCronJobConfig);
-        config.push(gameManagementCronJobConfig);
+        for (const [_key, job] of Object.entries(externalConfig.jobs.game_queue_job)) {
+            config.push(job);
+        }
 
         return config;
     }
@@ -108,7 +97,7 @@ export class GameJobService {
         return `https:${cleanUrl}`;
     }
 
-    async getRandomGameForEmbed(type: GameRequestTypeEnum): Promise<GameDTO | null> {
+    async getRandomGameForEmbed(type: string): Promise<GameDTO | null> {
         const game = await this.getRandomGame(type);
         
         if (!game) return null;
