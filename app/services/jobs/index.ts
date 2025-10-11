@@ -28,7 +28,11 @@ export class JobService {
         
         cron.schedule(appConfig.gameCronJobSchedule,  async () => {
             const timestamp = new Date();
-            console.log(`⏰ Emitindo evento gameQueueJob às ${timestamp.toLocaleTimeString()}`);
+            const brazilTime = timestamp.toLocaleTimeString('pt-BR', { 
+                timeZone: 'America/Sao_Paulo',
+                hour12: false 
+            });
+            console.log(`⏰ Emitindo evento gameQueueJob às ${brazilTime}`);
             const guilds = client.guilds.cache;
         
             const [game, onlineGame, freeGame, managementGame] = await this.fetchGamesWithDelay(gameJobService, [
