@@ -1,5 +1,6 @@
 import { EmbedBuilder } from "discord.js";
 import { JobClientEvent } from "../../structs/types/discord";
+import { isValidUrl } from "../../utils/Url";
 
 export default {
     name: "gameQueueJob",
@@ -26,8 +27,6 @@ export default {
                             .setColor(color)
                             .setTitle(game.name)
                             .setURL(game.igdbUrl)
-                            .setThumbnail(game.coverImage) // capa do jogo
-                            .setImage(game.backgroundImage) // screenshot ou imagem grande
                             .setDescription(
                                 `📖 **Resumo:**\n${game.summary.substring(0, 180)}${game.summary.length > 180 ? '...' : ''}\n\n` +
                             `🎮 **Lançamento:** ${game.releaseDate}\n` +
@@ -44,10 +43,13 @@ export default {
                                 iconURL: "https://www.igdb.com/favicon.ico",
                             })
                             .setTimestamp();
+
+                        if (isValidUrl(game.coverImage)) embed.setThumbnail(game.coverImage);
+                        if (isValidUrl(game.backgroundImage)) embed.setImage(game.backgroundImage);
             
                         channel.send({ embeds: [embed] });
                     }
-                } ).catch(console.error);
+                }).catch(console.error);
             });
         } catch (error) {
             console.error('❌ Erro ao processar fila de jogos:', error);

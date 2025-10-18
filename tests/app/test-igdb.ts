@@ -6,7 +6,7 @@ async function testIGDB() {
     const gameService = new GameJobService();
     
     try {
-        const game = await gameService.getRandomGameForEmbed();
+        const game = await gameService.getRandomGameForEmbed('normal');
         
         if (game) {
             console.log('✅ Jogo encontrado:');

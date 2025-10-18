@@ -1,11 +1,11 @@
 import { ClientEvents as OriginalClientEvents } from "discord.js";
 import { ExtendedClient } from "../ExtendedClient";
-import { Game } from "../../services/jobs/types/game";
+import { GameDTO } from "../../services/jobs/dto/GameDTO";
 
 export interface JobClientEvent {
     client: ExtendedClient;
     channelIds: string[];
-    game: Game;
+    game: GameDTO;
 }
 
 declare module "discord.js" {
