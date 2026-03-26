@@ -4,7 +4,8 @@
       "typeRoots": ["api/@types", "./node_modules/@types"],
       "types": [
         "node",
-        "express"
+        "express",
+        "jest"
       ],
       "outDir": "dist",
       "target": "ESNext",
@@ -23,5 +24,5 @@
       "importHelpers": true,
       "experimentalDecorators": true
     },
-    "include": ["app", "api", "app/structs/types/*.d.ts"],
+    "include": ["app", "api", "tests", "app/structs/types/*.d.ts"],
 }
