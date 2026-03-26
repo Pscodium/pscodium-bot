@@ -9,6 +9,10 @@ const env = config();
 expand(env);
 
 export const appConfig = {
+    ocsGame: {
+        wsBase: process.env.OCS_API_WS_BASE || "",
+        apiKey: process.env.OCS_API_KEY || "",
+    },
     igdb: {
         clientId: process.env.IGDB_CLIENT_ID || "",
         bearerToken: process.env.IGDB_BEARER_TOKEN || ""

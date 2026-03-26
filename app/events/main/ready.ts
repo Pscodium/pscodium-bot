@@ -1,11 +1,12 @@
 import { client } from "../..";
 import { JobService } from "../../services/jobs";
 import { Event } from "../../structs/types/Event";
+import { GlobalEventWsService } from "../../services/globalEventWs.service";
 
 export default new Event({
     name: "ready",
     once: true,
-    run() {
+    async run() {
 
         const { commands, buttons, selects, modals } = client;
 
@@ -17,5 +18,8 @@ export default new Event({
 
         const jobService = new JobService();
         jobService.start(client);
+
+        const globalEventWs = new GlobalEventWsService(client);
+        await globalEventWs.start();
     }
 });

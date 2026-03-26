@@ -4,6 +4,7 @@ import { externalConfig } from "../../config/app.config";
 interface GuildsAttributes {
     id?: string;
     welcome_channel_id?: string;
+    global_events_channel_id?: string;
     name: string;
     ownerId: string;
 }
@@ -28,6 +29,10 @@ export default function Guilds(sequelize: Sequelize) {
             primaryKey: true
         },
         welcome_channel_id: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        global_events_channel_id: {
             type: DataTypes.STRING,
             allowNull: true
         },

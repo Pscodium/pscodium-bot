@@ -12,6 +12,16 @@ jobs:
       processing_message: "🎮 Processando fila de jogos às"
       column_name: "games_channel_id"
     
+    high_score:
+      cron: "*/5 * * * *"
+      type: 'high_score'
+      class: "GameQueueJob"
+      queue: "default"
+      query: 'fields name, summary, cover.url, genres.name, platforms.name, rating, rating_count, first_release_date, screenshots.url, game_modes.name, multiplayer_modes.*; where rating > 70 & rating_count > 5; limit 1;'
+      description: "Job para processar a fila de jogos de notas altas."
+      processing_message: "🎮 Processando fila de jogos de notas altas às"
+      column_name: "games_high_score_channel_id"
+    
     multiplayer:
       cron: "*/5 * * * *"
       type: 'multiplayer'
