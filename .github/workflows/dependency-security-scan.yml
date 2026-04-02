@@ -1,0 +1,44 @@
+name: Dependency Security Scan
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+  schedule:
+    - cron: "35 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Audit dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Malware indicator scan
+        shell: bash
+        run: |
+          set -euo pipefail
+          PATTERN='xmrig|zzx\.zip|curl[[:space:]].*\|[[:space:]]*(bash|sh)|wget[[:space:]].*\|[[:space:]]*(bash|sh)|Invoke-Expression|IEX\(|powershell[[:space:]]+-enc|nc[[:space:]]+-e'
+          if grep -RInE --exclude=dependency-security-scan.yml --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=dist --exclude-dir=build --exclude-dir=.next --exclude-dir=target "$PATTERN" .; then
+            echo "Suspicious indicator found"
+            exit 1
+          fi
+          echo "No suspicious indicators found."
