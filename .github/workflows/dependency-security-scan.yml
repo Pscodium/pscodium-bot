@@ -27,7 +27,13 @@ jobs:
           node-version: "22"
 
       - name: Install dependencies
-        run: npm ci --ignore-scripts
+        shell: bash
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci --ignore-scripts
+          else
+            npm install --ignore-scripts
+          fi
 
       - name: Audit dependencies
         run: npm audit --omit=dev --audit-level=high
